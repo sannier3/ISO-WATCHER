@@ -1,0 +1,8 @@
+node_modules
+.env
+.history
+data
+*.db
+.git
+.agent
+.cursor

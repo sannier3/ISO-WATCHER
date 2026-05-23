@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ISO Watcher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/ui/style.css">
+</head>
+<body class="iw-public-page">
+  <header class="iw-header">
+    <div class="iw-header-inner">
+      <div>
+        <p class="iw-eyebrow">Surveillance ISO</p>
+        <h1>ISO Watcher</h1>
+        <p class="subtitle">Catalogue des releases détectées</p>
+      </div>
+      <div class="iw-header-actions">
+        <button type="button" id="btn-health-header" class="pill pill-btn" title="Vérifier /health et /ready">
+          <span id="health-pill-label">—</span>
+        </button>
+        <a href="/admin" id="admin-link" class="btn btn-secondary btn-sm" hidden>Administration</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="iw-main">
+    <section class="panel" id="panel-status">
+      <div class="panel-head">
+        <h2>État du service</h2>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-health">Vérifier la santé</button>
+      </div>
+      <p class="hint" id="health-summary">Cliquez sur le bouton ou sur l’indicateur en haut à droite.</p>
+    </section>
+
+    <section class="panel panel-last-action" id="panel-last-action" hidden>
+      <div class="panel-head">
+        <h2>Dernière action</h2>
+        <span id="last-action-badge" class="badge badge-muted">—</span>
+      </div>
+      <p id="last-action-summary" class="hint"></p>
+      <pre id="last-action-result" class="log">—</pre>
+    </section>
+
+    <section class="panel" id="panel-actions" hidden>
+      <h2>Actions opérateur</h2>
+      <p class="hint" id="actions-hint"></p>
+      <div class="action-grid">
+        <button type="button" class="action-card" id="btn-scan" disabled>
+          <strong>Scanner</strong>
+          <span>Lancer un scan complet</span>
+        </button>
+        <button type="button" class="action-card" id="btn-link-check" disabled>
+          <strong>Liens</strong>
+          <span>Vérifier les URLs des releases</span>
+        </button>
+      </div>
+      <details class="operator-panel" id="operator-panel" hidden>
+        <summary>Accès opérateur (token API)</summary>
+        <div class="operator-fields">
+          <label class="field">
+            <span>Token <code>X-Intranet-Token</code></span>
+            <input type="password" id="token" autocomplete="off">
+          </label>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-save-token">Enregistrer</button>
+        </div>
+      </details>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Releases récentes</h2>
+        <div class="toolbar">
+          <label class="field-inline"><input type="checkbox" id="publicOnly" checked> ISO publiques</label>
+          <label class="field-inline"><input type="checkbox" id="latestOnly"> Dernières uniquement</label>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-refresh-releases">Actualiser</button>
+        </div>
+      </div>
+      <p id="releases-stats" class="hint"></p>
+      <div id="releases" class="table-wrap"></div>
+      <div id="releases-pagination" class="pagination-bar"></div>
+    </section>
+  </main>
+
+  <footer class="iw-footer">
+    <a href="/docs">Documentation API</a>
+  </footer>
+
+  <div id="toast-host" class="toast-host" aria-live="polite"></div>
+
+  <script src="/ui/app.js"></script>
+</body>
+</html>

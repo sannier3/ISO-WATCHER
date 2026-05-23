@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ISO Watcher — Administration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+  <div id="auth-loading" class="auth-loading" hidden>
+    <p>Chargement de la console…</p>
+  </div>
+
+  <div id="login-screen" class="login-screen" hidden>
+    <div class="login-card">
+      <div class="login-brand">
+        <span class="brand-icon" aria-hidden="true">◉</span>
+        <h1>ISO Watcher</h1>
+        <p>Espace d'administration</p>
+      </div>
+      <form id="login-form" class="login-form">
+        <label id="login-password-wrap" class="field" hidden>
+          <span>Mot de passe administrateur</span>
+          <input type="password" id="login-password" autocomplete="current-password" placeholder="••••••••">
+        </label>
+        <p id="login-hint" class="hint"></p>
+        <button type="submit" class="btn btn-primary btn-block">Accéder à la console</button>
+        <p id="login-error" class="error-msg" role="alert" hidden></p>
+      </form>
+    </div>
+  </div>
+
+  <div id="app" class="app" hidden>
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-icon">◉</span>
+        <div>
+          <strong>ISO Watcher</strong>
+          <small id="sidebar-version">v—</small>
+        </div>
+      </div>
+      <nav class="sidebar-nav" id="sidebar-nav">
+        <button type="button" class="nav-item is-active" data-tab="dashboard">Tableau de bord</button>
+        <button type="button" class="nav-item" data-tab="iso">ISO & sources</button>
+        <button type="button" class="nav-item" data-tab="releases">Releases</button>
+        <button type="button" class="nav-item" data-tab="scans">Scans</button>
+        <button type="button" class="nav-item" data-tab="storage">Stockage</button>
+        <button type="button" class="nav-item" data-tab="notifications">Notifications</button>
+        <button type="button" class="nav-item" data-tab="users">Utilisateurs</button>
+        <button type="button" class="nav-item" data-tab="system">Système</button>
+      </nav>
+      <div class="sidebar-foot">
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-logout">Déconnexion</button>
+        <a href="/docs" target="_blank" rel="noopener" class="link-muted">API</a>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h2 id="page-title">Tableau de bord</h2>
+          <p id="page-subtitle" class="subtitle">Vue d'ensemble du service</p>
+        </div>
+        <div class="topbar-actions">
+          <span id="health-pill" class="pill">—</span>
+          <button type="button" class="btn btn-secondary" id="btn-refresh">Actualiser</button>
+        </div>
+      </header>
+
+      <div id="toast-host" class="toast-host" aria-live="polite"></div>
+
+      <!-- Dashboard -->
+      <section class="tab-panel is-active" data-panel="dashboard">
+        <div class="stat-grid" id="dashboard-stats"></div>
+        <div class="grid-2">
+          <article class="card">
+            <h3>Derniers scans</h3>
+            <div id="dashboard-scans" class="table-scroll"></div>
+          </article>
+          <article class="card">
+            <h3>Stockage</h3>
+            <div id="dashboard-storage"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ISO -->
+      <section class="tab-panel" data-panel="iso">
+        <article class="card">
+          <div class="card-head">
+            <h3>Créer une ISO</h3>
+            <button type="button" class="btn btn-ghost btn-sm" data-toggle="iso-create-form">Afficher le formulaire</button>
+          </div>
+          <form id="iso-create-form" class="form-grid form-collapsed" hidden>
+            <label class="field"><span>Nom *</span><input name="name" required></label>
+            <label class="field"><span>Distribution *</span><input name="distribution" required></label>
+            <label class="field"><span>Famille</span><input name="system_family" value="linux"></label>
+            <label class="field"><span>Édition</span><input name="edition"></label>
+            <label class="field"><span>Piste</span><input name="version_track" value="stable"></label>
+            <label class="field"><span>Architecture</span>
+              <select name="architecture">
+                <option value="amd64">amd64</option><option value="arm64">arm64</option>
+                <option value="x86">x86</option><option value="armhf">armhf</option>
+                <option value="i386">i386</option><option value="other">other</option>
+              </select>
+            </label>
+            <label class="field"><span>Type</span>
+              <select name="file_type"><option value="iso">iso</option><option value="img">img</option><option value="zip">zip</option></select>
+            </label>
+            <label class="field field-span"><span>Description</span><textarea name="description" rows="2"></textarea></label>
+            <label class="field field-check"><input type="checkbox" name="enabled" checked> Activée</label>
+            <label class="field field-check"><input type="checkbox" name="is_public" checked> Publique</label>
+            <div class="field-span form-actions">
+              <button type="submit" class="btn btn-primary">Créer l'ISO</button>
+            </div>
+          </form>
+        </article>
+        <article class="card">
+          <div class="card-head">
+            <h3>ISO enregistrées</h3>
+            <input type="search" id="iso-search" class="search-input" placeholder="Filtrer…">
+          </div>
+          <div id="iso-list" class="iso-list"></div>
+          <div id="iso-list-pagination" class="pagination-bar"></div>
+        </article>
+      </section>
+
+      <!-- Releases -->
+      <section class="tab-panel" data-panel="releases">
+        <article class="card">
+          <div class="card-head">
+            <h3>Releases récentes</h3>
+            <div class="toolbar">
+              <label class="field-inline"><input type="checkbox" id="releases-latest-only"> Dernières uniquement</label>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-load-releases">Charger</button>
+            </div>
+          </div>
+          <div id="releases-table" class="table-scroll"></div>
+          <div id="releases-pagination" class="pagination-bar"></div>
+        </article>
+      </section>
+
+      <!-- Scans -->
+      <section class="tab-panel" data-panel="scans">
+        <article class="card">
+          <div class="card-head">
+            <h3>Scans</h3>
+            <div class="toolbar">
+              <button type="button" class="btn btn-primary" id="btn-scan-global">Lancer un scan complet</button>
+              <button type="button" class="btn btn-secondary" id="btn-link-check">Vérifier les liens</button>
+            </div>
+          </div>
+          <div id="scans-table" class="table-scroll"></div>
+          <div id="scans-pagination" class="pagination-bar"></div>
+        </article>
+        <article class="card" id="scan-detail-card" hidden>
+          <div class="card-head">
+            <h3 id="scan-detail-title">Détail du scan</h3>
+            <button type="button" class="btn btn-ghost btn-sm" id="scan-detail-close">Fermer</button>
+          </div>
+          <div id="scan-detail-body"></div>
+        </article>
+      </section>
+
+      <!-- Storage -->
+      <section class="tab-panel" data-panel="storage">
+        <article class="card">
+          <div class="card-head">
+            <h3>Stockage local</h3>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-refresh-storage">Actualiser</button>
+          </div>
+          <div id="storage-panel"></div>
+        </article>
+      </section>
+
+      <!-- Notifications -->
+      <section class="tab-panel" data-panel="notifications">
+        <div class="grid-2">
+          <article class="card">
+            <h3>Événements</h3>
+            <div id="events-table" class="table-scroll"></div>
+            <div id="events-pagination" class="pagination-bar"></div>
+          </article>
+          <article class="card">
+            <div class="card-head">
+              <h3>Livraisons</h3>
+              <select id="delivery-status-filter" class="select-sm">
+                <option value="">Tous</option>
+                <option value="pending">pending</option>
+                <option value="sent">sent</option>
+                <option value="failed">failed</option>
+              </select>
+            </div>
+            <div id="deliveries-table" class="table-scroll"></div>
+            <div id="deliveries-pagination" class="pagination-bar"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Users -->
+      <section class="tab-panel" data-panel="users">
+        <article class="card">
+          <h3>Utilisateurs</h3>
+          <p class="hint">Consultez un utilisateur par ID pour destinations et abonnements.</p>
+          <div id="users-table" class="table-scroll"></div>
+          <div id="users-pagination" class="pagination-bar"></div>
+          <form id="user-lookup-form" class="form-inline" style="margin-top:1rem">
+            <label class="field"><span>ID utilisateur</span><input type="number" name="user_id" min="1" required></label>
+            <button type="submit" class="btn btn-secondary">Charger détails</button>
+          </form>
+          <div id="user-detail" class="user-detail"></div>
+        </article>
+      </section>
+
+      <!-- System -->
+      <section class="tab-panel" data-panel="system">
+        <div class="grid-2">
+          <article class="card">
+            <h3>Santé du service</h3>
+            <pre id="system-health" class="code-block">—</pre>
+          </article>
+          <article class="card">
+            <h3>Prêt (base de données)</h3>
+            <pre id="system-ready" class="code-block">—</pre>
+          </article>
+        </div>
+        <article class="card">
+          <h3>Configuration (lecture seule)</h3>
+          <pre id="system-config" class="code-block">—</pre>
+        </article>
+        <article class="card">
+          <h3>Test de notification</h3>
+          <form id="notif-test-form" class="form-grid">
+            <label class="field"><span>ID destination</span><input type="number" name="destination_id" min="1" required></label>
+            <label class="field field-check field-span"><input type="checkbox" name="include_fake_release" checked> Inclure une fausse release</label>
+            <div class="field-span"><button type="submit" class="btn btn-primary">Envoyer un test</button></div>
+          </form>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="/admin/admin.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ISO Watcher — Documentation API</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --panel: #121820;
+      --card: #161d27;
+      --text: #e8edf4;
+      --muted: #8b9cb3;
+      --accent: #3b82f6;
+      --border: rgba(148, 163, 184, 0.15);
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+      --font: 'DM Sans', system-ui, sans-serif;
+      --nav-w: 260px;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; }
+    a { color: var(--accent); }
+    code { font-family: var(--mono); font-size: 0.88em; background: var(--panel); padding: 0.1em 0.35em; border-radius: 4px; }
+    pre { font-family: var(--mono); font-size: 0.82rem; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; overflow: auto; }
+    .layout { display: flex; min-height: 100vh; }
+    .nav {
+      width: var(--nav-w);
+      flex-shrink: 0;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 1.25rem 1rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .nav h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 1.25rem 0 0.5rem; }
+    .nav h2:first-child { margin-top: 0; }
+    .nav a { display: block; padding: 0.3rem 0.5rem; color: var(--muted); text-decoration: none; font-size: 0.88rem; border-radius: 6px; }
+    .nav a:hover { color: var(--text); background: var(--card); }
+    .main { flex: 1; padding: 2rem 2.5rem 4rem; max-width: 920px; }
+    h1 { font-size: 1.85rem; margin: 0 0 0.5rem; }
+    .lead { color: var(--muted); margin-bottom: 2rem; }
+    h2 { font-size: 1.35rem; margin: 2.5rem 0 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    h2:first-of-type { border-top: none; padding-top: 0; }
+    h3 { font-size: 1.05rem; margin: 1.5rem 0 0.75rem; color: #c5d4e8; }
+    h4 { font-size: 0.95rem; margin: 1rem 0 0.5rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 1rem 0; }
+    th, td { border: 1px solid var(--border); padding: 0.5rem 0.65rem; text-align: left; }
+    th { background: var(--panel); color: var(--muted); font-weight: 600; }
+    .method { font-family: var(--mono); font-weight: 600; font-size: 0.8rem; }
+    .method.get { color: #3dd68c; }
+    .method.post { color: #60a5fa; }
+    .method.patch { color: #fbbf24; }
+    .method.delete { color: #f87171; }
+    .endpoint { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; margin: 1rem 0; }
+    .endpoint-head { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-bottom: 0.75rem; }
+    .badge { font-size: 0.72rem; padding: 0.2rem 0.5rem; border-radius: 4px; background: var(--panel); color: var(--muted); }
+    .badge.auth-no { color: #3dd68c; }
+    .badge.auth-yes { color: #fbbf24; }
+    .badge.auth-admin { color: #f87171; }
+    ul { padding-left: 1.25rem; }
+    .top-links { margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .example-block { margin: 1.5rem 0; padding: 1rem 1.25rem; background: var(--card); border: 1px solid var(--border); border-radius: 10px; }
+    .example-block h3 { margin-top: 0; }
+    .actor-tag { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 4px; margin-right: 0.35rem; }
+    .actor-public { background: rgba(61, 214, 140, 0.15); color: #3dd68c; }
+    .actor-internal { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
+    .actor-admin { background: rgba(248, 113, 113, 0.15); color: #f87171; }
+    .actor-none { background: rgba(148, 163, 184, 0.12); color: var(--muted); }
+    .req-label, .res-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 1rem 0 0.35rem; }
+    .res-label { color: #3dd68c; }
+    .note { font-size: 0.9rem; color: var(--muted); border-left: 3px solid var(--accent); padding-left: 0.75rem; margin: 0.75rem 0; }
+    pre.two-col-hint { font-size: 0.78rem; }
+    @media (max-width: 900px) {
+      .layout { flex-direction: column; }
+      .nav { width: 100%; height: auto; position: static; }
+      .main { padding: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <nav class="nav" aria-label="Sommaire">
+      <p><strong>ISO Watcher API</strong><br><small>v0.2.0</small></p>
+      <h2>Général</h2>
+      <a href="#auth">Authentification</a>
+      <a href="#errors">Erreurs</a>
+      <a href="#system">Système</a>
+      <a href="#config">Configuration / UI</a>
+      <h2>Ressources</h2>
+      <a href="#admin">Administration</a>
+      <a href="#users">Utilisateurs</a>
+      <a href="#iso">ISO</a>
+      <a href="#sources">Sources</a>
+      <a href="#releases">Releases & stockage</a>
+      <a href="#scans">Scans</a>
+      <a href="#link-check">Liens</a>
+      <a href="#destinations">Destinations</a>
+      <a href="#subscriptions">Abonnements</a>
+      <a href="#notifications">Notifications</a>
+      <h2>Plus</h2>
+      <a href="#enums">Énumérations</a>
+      <a href="#examples">Exemples complets</a>
+      <a href="#ex-public">↳ Public (sans auth)</a>
+      <a href="#ex-public-user">↳ Utilisateur public</a>
+      <a href="#ex-internal">↳ Interne / opérateur</a>
+      <a href="#ex-admin">↳ Administrateur</a>
+      <a href="#ex-ui-session">↳ Sessions UI</a>
+      <a href="#ex-edge">↳ Cas particuliers</a>
+      <a href="/docs/API.md" target="_blank" rel="noopener">Markdown brut</a>
+      <a href="/">← Interface</a>
+    </nav>
+
+    <main class="main">
+      <h1>Documentation API</h1>
+      <p class="lead">Référence complète des endpoints ISO Watcher. Base URL : <code>http://&lt;hôte&gt;:3088</code></p>
+      <p class="top-links">Version Markdown : <a href="/docs/API.md">/docs/API.md</a></p>
+
+      <section id="auth">
+        <h2>Authentification</h2>
+        <table>
+          <thead><tr><th>En-tête</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>X-Intranet-Token</code></td><td>Token partagé (<code>INTRANET_SHARED_TOKEN</code>)</td></tr>
+            <tr><td><code>X-UI-Session</code></td><td>Session signée (réponse <code>ui-login</code> / <code>ui-session</code>)</td></tr>
+            <tr><td><code>X-Actor-Username</code></td><td>Audit (optionnel)</td></tr>
+            <tr><td><code>X-Actor-Type</code></td><td><code>internal</code>, <code>admin</code>, <code>public</code></td></tr>
+            <tr><td><code>X-Public-Email</code></td><td>Compte public (destinations propres)</td></tr>
+          </tbody>
+        </table>
+        <p>Sans auth : <code>/health</code>, <code>/ready</code>, <code>/version</code>, UI statique, <code>ui-config</code>, <code>ui-login</code>, <code>ui-session</code>, <code>GET /releases/recent?public=true</code>.</p>
+      </section>
+
+      <section id="errors">
+        <h2>Format des erreurs</h2>
+        <pre>{ "error": "unauthorized", "message": "..." }</pre>
+        <table>
+          <thead><tr><th>HTTP</th><th>error</th></tr></thead>
+          <tbody>
+            <tr><td>401</td><td><code>unauthorized</code>, <code>invalid_credentials</code>, <code>invalid_ui_session</code></td></tr>
+            <tr><td>403</td><td><code>admin_required</code>, <code>forbidden</code>, <code>public_actions_disabled</code></td></tr>
+            <tr><td>404</td><td><code>*_not_found</code></td></tr>
+            <tr><td>409</td><td><code>link_check_already_running</code></td></tr>
+            <tr><td>503</td><td><code>storage_disabled</code></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="system">
+        <h2>Système et santé</h2>
+
+        <div class="endpoint" id="ep-health">
+          <div class="endpoint-head">
+            <span class="method get">GET</span><code>/health</code>
+            <span class="badge auth-no">sans auth</span>
+          </div>
+          <p>Santé du service + vérification du stockage (accessible / lisible / inscriptible, <strong>sans chemin</strong>).</p>
+          <pre>{
+  "ok": true,
+  "version": "0.2.0",
+  "db_driver": "sqlite",
+  "storage_enabled": true,
+  "storage": {
+    "enabled": true,
+    "reachable": true,
+    "readable": true,
+    "writable": true,
+    "ok": true,
+    "error": null
+  }
+}</pre>
+        </div>
+
+        <div class="endpoint">
+          <div class="endpoint-head">
+            <span class="method get">GET</span><code>/ready</code>
+            <span class="badge auth-no">sans auth</span>
+          </div>
+          <p>Test connexion BDD. Réponse : <code>{ "ok": true, "db_driver": "...", "version": "..." }</code></p>
+        </div>
+
+        <div class="endpoint">
+          <div class="endpoint-head">
+            <span class="method get">GET</span><code>/version</code>
+            <span class="badge auth-no">sans auth</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="config">
+        <h2>Configuration et interfaces web</h2>
+
+        <div class="endpoint">
+          <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/config/public</code><span class="badge auth-yes">auth</span></div>
+          <p>Version, driver BDD, flags UI/stockage (pas de chemins).</p>
+        </div>
+
+        <div class="endpoint">
+          <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/public/ui-config</code><span class="badge auth-no">sans auth</span></div>
+          <p>Config page publique <code>/</code>.</p>
+        </div>
+
+        <div class="endpoint">
+          <div class="endpoint-head"><span class="method post">POST</span><code>/api/v1/public/ui-session</code><span class="badge auth-no">sans auth</span></div>
+          <p>Session opérateur si <code>PUBLIC_UI_ALLOW_ACTIONS</code> + <code>PUBLIC_UI_ACTIONS_AUTO_AUTH</code>.</p>
+          <p><strong>Réponse :</strong> <code>{ "ok": true, "ui_session": "...", "actor": { "type": "internal" } }</code></p>
+        </div>
+
+        <div class="endpoint">
+          <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/admin/ui-config</code><span class="badge auth-no">sans auth</span></div>
+        </div>
+
+        <div class="endpoint">
+          <div class="endpoint-head"><span class="method post">POST</span><code>/api/v1/admin/ui-login</code><span class="badge auth-no">sans auth</span></div>
+          <p><strong>Corps :</strong> <code>{ "password": "..." }</code> si auth requise.</p>
+          <p><strong>Réponse :</strong> <code>ui_session</code> + <code>actor.type: admin</code></p>
+        </div>
+      </section>
+
+      <section id="admin">
+        <h2>Administration</h2>
+
+        <div class="endpoint">
+          <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/admin/overview</code><span class="badge auth-admin">admin</span></div>
+          <p>Compteurs, scans récents, statut stockage, configuration.</p>
+        </div>
+
+        <div class="endpoint">
+          <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/admin/users</code><span class="badge auth-admin">admin</span></div>
+          <p><strong>Query :</strong> <code>limit</code> (1–500, défaut 100).</p>
+        </div>
+      </section>
+
+      <section id="users">
+        <h2>Utilisateurs</h2>
+        <table>
+          <thead><tr><th>Méthode</th><th>Route</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td class="method post">POST</td><td><code>/api/v1/users/upsert</code></td><td>Créer / mettre à jour</td></tr>
+            <tr><td class="method get">GET</td><td><code>/api/v1/users/:userId</code></td><td>Détail</td></tr>
+            <tr><td class="method get">GET</td><td><code>/api/v1/public/users/by-email?email=</code></td><td>Utilisateur public</td></tr>
+            <tr><td class="method delete">DELETE</td><td><code>/api/v1/public/users/by-email?email=</code></td><td>Suppression</td></tr>
+          </tbody>
+        </table>
+        <h4>POST /users/upsert — corps</h4>
+        <table>
+          <thead><tr><th>Champ</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>user_type</code></td><td>string</td><td><code>internal</code> | <code>public</code></td></tr>
+            <tr><td><code>email</code></td><td>string</td><td>E-mail</td></tr>
+            <tr><td><code>username</code></td><td>string</td><td>Optionnel</td></tr>
+            <tr><td><code>external_ref</code></td><td>string</td><td>Optionnel</td></tr>
+            <tr><td><code>display_name</code></td><td>string</td><td>Optionnel</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="iso">
+        <h2>ISO (iso_items)</h2>
+        <table>
+          <thead><tr><th>Méthode</th><th>Route</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="method get">GET</td><td><code>/api/v1/iso-items</code></td><td>Query : <code>distribution</code>, <code>architecture</code>, <code>enabled</code>, <code>public</code></td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/iso-items</code></td><td>Création — voir API.md</td></tr>
+            <tr><td class="method get">GET</td><td><code>/api/v1/iso-items/:id</code></td><td>Détail</td></tr>
+            <tr><td class="method patch">PATCH</td><td><code>/api/v1/iso-items/:id</code></td><td>Mise à jour partielle</td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/iso-items/:id/enable|disable</code></td><td>Activation</td></tr>
+            <tr><td class="method delete">DELETE</td><td><code>/api/v1/iso-items/:id</code></td><td>Suppression</td></tr>
+            <tr><td class="method get">GET</td><td><code>/api/v1/iso-items/:id/latest</code></td><td>Dernière release</td></tr>
+            <tr><td class="method get">GET</td><td><code>/api/v1/iso-items/:id/releases</code></td><td>Query <code>limit</code></td></tr>
+            <tr><td class="method get">GET</td><td><code>/api/v1/iso-items/:id/download</code></td><td>Métadonnées URL distante</td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/iso-items/:id/scan</code></td><td>Corps : <code>notify</code>, <code>triggered_by_user_id</code></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="sources">
+        <h2>Sources (iso_sources)</h2>
+        <table>
+          <thead><tr><th>Méthode</th><th>Route</th></tr></thead>
+          <tbody>
+            <tr><td class="method get">GET</td><td><code>/api/v1/iso-items/:isoItemId/sources</code></td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/iso-items/:isoItemId/sources</code></td></tr>
+            <tr><td class="method patch">PATCH</td><td><code>/api/v1/sources/:sourceId</code></td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/sources/:sourceId/test</code></td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/sources/:sourceId/scan</code></td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/sources/:sourceId/enable|disable</code></td></tr>
+            <tr><td class="method delete">DELETE</td><td><code>/api/v1/sources/:sourceId</code></td></tr>
+          </tbody>
+        </table>
+        <h4>Création source — champs principaux</h4>
+        <p><code>name</code>, <code>url</code>, <code>match_regex</code>, <code>version_regex</code>, <code>checksum_regex</code>, <code>discovery_enabled</code>, <code>discovery_depth</code> (1–6), <code>discovery_regex</code>, <code>priority</code>, <code>allow_insecure_tls</code>, <code>ftp_passive</code>.</p>
+        <h4>POST …/test — réponse</h4>
+        <pre>{ "ok": true, "source_id": 1, "matches": [...], "discovery": { "enabled": true, "scanned_directories": 3 } }</pre>
+      </section>
+
+      <section id="releases">
+        <h2>Releases et stockage</h2>
+
+        <div class="endpoint">
+          <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/releases/recent</code><span class="badge auth-yes">auth*</span></div>
+          <p>* Sans token si <code>?public=true</code>.</p>
+          <p><strong>Query :</strong> <code>limit</code> (50), <code>public</code>, <code>enabled</code>, <code>latest</code>, <code>distribution</code>, <code>architecture</code>.</p>
+        </div>
+
+        <div class="endpoint">
+          <div class="endpoint-head"><span class="method post">POST</span><code>/api/v1/releases/:releaseId/download</code><span class="badge auth-yes">auth</span></div>
+          <p>Téléchargement local. Réponse : <code>{ "ok": true, "release_id", "local_path", "linked_existing" }</code></p>
+        </div>
+
+        <div class="endpoint">
+          <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/releases/:releaseId/local-file</code><span class="badge auth-yes">auth</span></div>
+          <p>Fichier binaire <code>application/octet-stream</code>.</p>
+        </div>
+
+        <div class="endpoint">
+          <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/storage/status</code><span class="badge auth-yes">internal/admin</span></div>
+          <p>File d’attente, compteurs <code>download_status</code>, releases suivies.</p>
+        </div>
+      </section>
+
+      <section id="scans">
+        <h2>Scans</h2>
+        <p>Les scans manuels sont <strong>asynchrones</strong> : réponse immédiate <code>status: running</code>, puis polling sur <code>GET /scans/:id</code>.</p>
+        <pre>{
+  "scan_run_id": 15,
+  "status": "running",
+  "async": true,
+  "message": "Scan accepté et exécuté en arrière-plan"
+}</pre>
+        <table>
+          <thead><tr><th>Méthode</th><th>Route</th></tr></thead>
+          <tbody>
+            <tr><td class="method post">POST</td><td><code>/api/v1/scans/run</code> — global</td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/iso-items/:id/scan</code></td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/sources/:id/scan</code></td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/scans/test</code> — test source + notif optionnelle</td></tr>
+            <tr><td class="method get">GET</td><td><code>/api/v1/scans</code> — Query <code>limit</code></td></tr>
+            <tr><td class="method get">GET</td><td><code>/api/v1/scans/:scanRunId</code> — Query <code>log_limit</code>, <code>log_since_id</code></td></tr>
+            <tr><td class="method get">GET</td><td><code>/api/v1/scans/:scanRunId/logs</code> — Query <code>limit</code>, <code>since_id</code></td></tr>
+          </tbody>
+        </table>
+        <p>Statuts scan : <code>running</code>, <code>success</code>, <code>error</code>, <code>partial_error</code>. Champs calculés : <code>is_finished</code>, <code>progress_percent</code>.</p>
+      </section>
+
+      <section id="link-check">
+        <h2>Vérification des liens</h2>
+        <div class="endpoint">
+          <div class="endpoint-head"><span class="method post">POST</span><code>/api/v1/admin/release-link-check</code><span class="badge auth-admin">admin / opérateur</span></div>
+          <p><strong>Corps :</strong> <code>send_admin_report</code> (bool), <code>report_hours</code> (1–168).</p>
+          <pre>{
+  "skipped": false,
+  "checked": 120,
+  "valid": 118,
+  "removed": 2,
+  "new_in_period": 5,
+  "duration_ms": 45000,
+  "removed_releases": [ { "id", "iso_name", "filename", "url", "reason", "http_status" } ]
+}</pre>
+        </div>
+      </section>
+
+      <section id="destinations">
+        <h2>Destinations</h2>
+        <table>
+          <thead><tr><th>Méthode</th><th>Route</th></tr></thead>
+          <tbody>
+            <tr><td class="method get">GET</td><td><code>/api/v1/destination-types</code></td></tr>
+            <tr><td class="method get">GET</td><td><code>/api/v1/users/:userId/destinations</code></td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/users/:userId/destinations</code></td></tr>
+            <tr><td class="method patch">PATCH</td><td><code>/api/v1/destinations/:destinationId</code></td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/destinations/:destinationId/test</code></td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/destinations/:id/enable|disable</code></td></tr>
+            <tr><td class="method delete">DELETE</td><td><code>/api/v1/destinations/:destinationId</code></td></tr>
+          </tbody>
+        </table>
+        <p>Types : <code>email</code>, <code>discord_webhook</code>, <code>teams_webhook</code>, <code>generic_webhook</code>. Corps création : <code>destination_type</code>, <code>target</code>, <code>label</code>, <code>config</code> (objet JSON).</p>
+      </section>
+
+      <section id="subscriptions">
+        <h2>Abonnements</h2>
+        <table>
+          <thead><tr><th>Méthode</th><th>Route</th></tr></thead>
+          <tbody>
+            <tr><td class="method get">GET</td><td><code>/api/v1/users/:userId/subscriptions</code></td></tr>
+            <tr><td class="method get">GET</td><td><code>/api/v1/public/subscriptions?email=</code></td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/users/:userId/subscriptions</code></td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/public/subscriptions</code> — inscription complète</td></tr>
+            <tr><td class="method patch">PATCH</td><td><code>/api/v1/subscriptions/:subscriptionId</code></td></tr>
+            <tr><td class="method delete">DELETE</td><td><code>/api/v1/subscriptions/:subscriptionId</code></td></tr>
+            <tr><td class="method delete">DELETE</td><td><code>/api/v1/public/subscriptions</code> — corps <code>email</code> + <code>iso_item_ids</code></td></tr>
+          </tbody>
+        </table>
+        <p><code>notify_mode</code> : <code>immediate</code>, <code>hourly_digest</code>, <code>daily_digest</code>.</p>
+      </section>
+
+      <section id="notifications">
+        <h2>Notifications</h2>
+        <table>
+          <thead><tr><th>Méthode</th><th>Route</th></tr></thead>
+          <tbody>
+            <tr><td class="method get">GET</td><td><code>/api/v1/notifications/events</code> — Query <code>limit</code></td></tr>
+            <tr><td class="method get">GET</td><td><code>/api/v1/notifications/events/:eventId</code></td></tr>
+            <tr><td class="method get">GET</td><td><code>/api/v1/notifications/deliveries</code> — Query <code>status</code>, <code>destination_id</code></td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/notifications/deliveries/:deliveryId/retry</code></td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/notifications/test</code></td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/notifications/preview</code> — <code>destination_type</code>, <code>release_ids</code></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="enums">
+        <h2>Énumérations</h2>
+        <h3>download_status</h3>
+        <p><code>none</code>, <code>downloading</code>, <code>completed</code>, <code>failed</code>, <code>replaced</code></p>
+        <h3>user_type</h3>
+        <p><code>internal</code>, <code>public</code></p>
+      </section>
+
+      <section id="examples">
+        <h2>Exemples complets d'appels API</h2>
+        <p class="lead" style="margin-bottom:1.5rem">
+          Base : <code>http://192.168.100.30:3088</code> — remplacez <code>VOTRE_TOKEN</code> par <code>INTRANET_SHARED_TOKEN</code>.
+          Les réponses sont abrégées (<code>…</code>) lorsque le schéma est déjà documenté plus haut.
+        </p>
+
+        <div class="note">
+          <strong>Matrice des acteurs</strong><br>
+          <span class="actor-tag actor-none">aucun</span> catalogue public, santé<br>
+          <span class="actor-tag actor-public">public</span> + <code>X-Public-Email</code> — ses abonnements/destinations uniquement<br>
+          <span class="actor-tag actor-internal">internal</span> + token — intranet, scripts, opérateur<br>
+          <span class="actor-tag actor-admin">admin</span> + token ou session UI — console <code>/admin</code>
+        </div>
+
+        <section id="ex-public">
+          <h3>1. Accès public (sans authentification)</h3>
+
+          <div class="example-block">
+            <h4>Santé et catalogue des releases publiques</h4>
+            <p class="req-label">Requête — GET /health</p>
+            <pre>curl -s http://127.0.0.1:3088/health</pre>
+            <p class="res-label">Réponse 200</p>
+            <pre>{
+  "ok": true,
+  "version": "0.2.0",
+  "db_driver": "mysql",
+  "storage_enabled": true,
+  "storage": {
+    "enabled": true,
+    "reachable": true,
+    "readable": true,
+    "writable": true,
+    "ok": true,
+    "error": null
+  }
+}</pre>
+            <p class="req-label">Requête — GET /api/v1/releases/recent (sans token)</p>
+            <pre>curl -s "http://127.0.0.1:3088/api/v1/releases/recent?public=true&amp;enabled=true&amp;limit=5"</pre>
+            <p class="res-label">Réponse 200 — tableau</p>
+            <pre>[
+  {
+    "id": 42,
+    "iso_item_id": 3,
+    "filename": "ubuntu-24.04.1-desktop-amd64.iso",
+    "version": "24.04.1",
+    "url": "https://releases.ubuntu.com/24.04.1/…",
+    "file_size": 6345887744,
+    "detected_at": "2026-05-20 14:22:00",
+    "is_latest": true,
+    "download_status": "completed",
+    "iso_name": "Ubuntu Desktop",
+    "distribution": "ubuntu",
+    "architecture": "amd64"
+  }
+]</pre>
+          </div>
+        </section>
+
+        <section id="ex-public-user">
+          <h3>2. Utilisateur public (portail / notifications)</h3>
+
+          <div class="example-block">
+            <h4>Inscription : compte + abonnements + webhook Discord</h4>
+            <p class="req-label">Requête</p>
+            <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/public/subscriptions \
+  -H "X-Intranet-Token: VOTRE_TOKEN" \
+  -H "X-Actor-Type: public" \
+  -H "X-Actor-Username: portal" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "display_name": "Jean Dupont",
+    "iso_item_ids": [3, 7],
+    "notify_mode": "immediate",
+    "destinations": [
+      {
+        "destination_type": "discord_webhook",
+        "label": "Mon salon",
+        "target": "https://discord.com/api/webhooks/…",
+        "config": { "username": "ISO Watcher" }
+      }
+    ]
+  }'</pre>
+            <p class="res-label">Réponse 200</p>
+            <pre>{
+  "user": {
+    "id": 12,
+    "user_type": "public",
+    "email": "user@example.com",
+    "display_name": "Jean Dupont"
+  },
+  "subscriptions": [
+    { "id": 30, "user_id": 12, "iso_item_id": 3, "notify_mode": "immediate", "enabled": true },
+    { "id": 31, "user_id": 12, "iso_item_id": 7, "notify_mode": "immediate", "enabled": true }
+  ],
+  "destinations": [
+    { "id": 8, "user_id": 12, "destination_type": "discord_webhook", "target": "https://discord.com/api/webhooks/…", "enabled": true }
+  ]
+}</pre>
+          </div>
+
+          <div class="example-block">
+            <h4>Consulter ses abonnements (acteur public + e-mail)</h4>
+            <p class="req-label">Requête</p>
+            <pre>curl -s "http://127.0.0.1:3088/api/v1/public/subscriptions?email=user@example.com" \
+  -H "X-Intranet-Token: VOTRE_TOKEN" \
+  -H "X-Actor-Type: public" \
+  -H "X-Public-Email: user@example.com"</pre>
+            <p class="res-label">Réponse 200</p>
+            <pre>[
+  {
+    "id": 30,
+    "iso_item_id": 3,
+    "notify_mode": "immediate",
+    "enabled": true,
+    "name": "Ubuntu Desktop",
+    "distribution": "ubuntu",
+    "architecture": "amd64"
+  }
+]</pre>
+            <p class="note">Pour modifier une destination qui lui appartient : <code>PATCH /api/v1/destinations/8</code> avec les mêmes en-têtes <code>X-Public-Email</code>.</p>
+          </div>
+
+          <div class="example-block">
+            <h4>Se désabonner de certaines ISO</h4>
+            <p class="req-label">Requête</p>
+            <pre>curl -s -X DELETE http://127.0.0.1:3088/api/v1/public/subscriptions \
+  -H "X-Intranet-Token: VOTRE_TOKEN" \
+  -H "X-Actor-Type: public" \
+  -H "Content-Type: application/json" \
+  -d '{ "email": "user@example.com", "iso_item_ids": [7] }'</pre>
+            <p class="res-label">Réponse 200</p>
+            <pre>{ "deleted": 1 }</pre>
+          </div>
+        </section>
+
+        <section id="ex-internal">
+          <h3>3. Acteur interne (intranet, automatisation)</h3>
+
+          <div class="example-block">
+            <h4>Créer une ISO et une source HTTP</h4>
+            <p class="req-label">Requête — POST /api/v1/iso-items</p>
+            <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/iso-items \
+  -H "X-Intranet-Token: VOTRE_TOKEN" \
+  -H "X-Actor-Type: internal" \
+  -H "X-Actor-Username: intranet-admin" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Debian netinst",
+    "distribution": "debian",
+    "architecture": "amd64",
+    "is_public": true,
+    "enabled": true
+  }'</pre>
+            <p class="res-label">Réponse 200</p>
+            <pre>{ "id": 15, "name": "Debian netinst", "distribution": "debian", "enabled": 1, "is_public": 1, … }</pre>
+            <p class="req-label">Requête — POST /api/v1/iso-items/15/sources</p>
+            <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/iso-items/15/sources \
+  -H "X-Intranet-Token: VOTRE_TOKEN" \
+  -H "X-Actor-Type: internal" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "CDN officiel",
+    "url": "https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/",
+    "protocol": "https",
+    "match_regex": "debian-.*-amd64-netinst\\\\.iso$",
+    "version_regex": "debian-([0-9.]+)-",
+    "discovery_enabled": true,
+    "discovery_depth": 2,
+    "discovery_regex": "^[^./][^/]+/$",
+    "priority": 10,
+    "enabled": true
+  }'</pre>
+            <p class="res-label">Réponse 200</p>
+            <pre>{ "id": 22, "iso_item_id": 15, "name": "CDN officiel", "url": "https://cdimage.debian.org/…", "enabled": 1, … }</pre>
+          </div>
+
+          <div class="example-block">
+            <h4>Lancer un scan global et suivre la progression</h4>
+            <p class="req-label">Requête — POST /api/v1/scans/run</p>
+            <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/scans/run \
+  -H "X-Intranet-Token: VOTRE_TOKEN" \
+  -H "X-Actor-Type: internal" \
+  -H "Content-Type: application/json" \
+  -d '{ "notify": true }'</pre>
+            <p class="res-label">Réponse 200 (immédiate — scan asynchrone)</p>
+            <pre>{
+  "scan_run_id": 87,
+  "status": "running",
+  "async": true,
+  "message": "Scan accepté et exécuté en arrière-plan"
+}</pre>
+            <p class="req-label">Requête — GET /api/v1/scans/87 (polling)</p>
+            <pre>curl -s http://127.0.0.1:3088/api/v1/scans/87 \
+  -H "X-Intranet-Token: VOTRE_TOKEN"</pre>
+            <p class="res-label">Réponse 200 (en cours)</p>
+            <pre>{
+  "id": 87,
+  "status": "running",
+  "total_sources": 12,
+  "completed_sources": 4,
+  "new_releases": 0,
+  "is_finished": false,
+  "progress_percent": 33,
+  "sources": [ … ],
+  "logs": [ { "id": 1, "level": "info", "message": "Scan démarré", "context": {} } ]
+}</pre>
+            <p class="res-label">Réponse 200 (terminé)</p>
+            <pre>{
+  "id": 87,
+  "status": "success",
+  "new_releases": 2,
+  "is_finished": true,
+  "progress_percent": 100,
+  "finished_at": "2026-05-22 16:05:00"
+}</pre>
+          </div>
+
+          <div class="example-block">
+            <h4>Téléchargement local d'une release (asynchrone)</h4>
+            <p class="req-label">Requête — POST /api/v1/releases/42/download</p>
+            <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/releases/42/download \
+  -H "X-Intranet-Token: VOTRE_TOKEN" \
+  -H "X-Actor-Type: internal"</pre>
+            <p class="res-label">Réponse 200 — fichier déjà sur disque</p>
+            <pre>{
+  "ok": true,
+  "linked": true,
+  "skipped_download": true,
+  "local_path": "/mnt/ISO/ubuntu-24.04.1-desktop-amd64.iso",
+  "file_size": 6345887744
+}</pre>
+            <p class="res-label">Réponse 200 — téléchargement démarré</p>
+            <pre>{
+  "ok": true,
+  "accepted": true,
+  "async": true,
+  "status": "downloading",
+  "release_id": 42,
+  "message": "Téléchargement démarré en arrière-plan"
+}</pre>
+            <p class="req-label">Suivi — GET /api/v1/storage/status</p>
+            <pre>curl -s http://127.0.0.1:3088/api/v1/storage/status \
+  -H "X-Intranet-Token: VOTRE_TOKEN" \
+  -H "X-Actor-Type: internal"</pre>
+          </div>
+        </section>
+
+        <section id="ex-admin">
+          <h3>4. Acteur administrateur</h3>
+
+          <div class="example-block">
+            <h4>Vue d'ensemble et liste utilisateurs</h4>
+            <p class="req-label">Requête — GET /api/v1/admin/overview</p>
+            <pre>curl -s http://127.0.0.1:3088/api/v1/admin/overview \
+  -H "X-Intranet-Token: VOTRE_TOKEN" \
+  -H "X-Actor-Type: admin" \
+  -H "X-Actor-Username: admin"</pre>
+            <p class="res-label">Réponse 200 (extrait)</p>
+            <pre>{
+  "version": "0.2.0",
+  "counts": { "iso_items": 12, "releases": 340, "users": 5 },
+  "recent_scans": [ … ],
+  "storage": { "enabled": true, "counts": { "completed": 50, "downloading": 1 } },
+  "config": { "scheduler_enabled": true, "link_check_enabled": true }
+}</pre>
+            <p class="note"><code>GET /api/v1/admin/users?limit=50</code> exige aussi <code>X-Actor-Type: admin</code>. Un acteur <code>internal</code> reçoit <strong>403</strong> <code>admin_required</code>.</p>
+          </div>
+
+          <div class="example-block">
+            <h4>Vérification manuelle des liens morts</h4>
+            <p class="req-label">Requête</p>
+            <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/admin/release-link-check \
+  -H "X-Intranet-Token: VOTRE_TOKEN" \
+  -H "X-Actor-Type: admin" \
+  -H "Content-Type: application/json" \
+  -d '{ "send_admin_report": true, "report_hours": 24 }'</pre>
+            <p class="res-label">Réponse 200</p>
+            <pre>{
+  "skipped": false,
+  "checked": 120,
+  "valid": 118,
+  "removed": 2,
+  "new_in_period": 5,
+  "duration_ms": 45000,
+  "removed_releases": [
+    {
+      "id": 10,
+      "iso_name": "Ubuntu",
+      "filename": "old.iso",
+      "url": "https://example.invalid/old.iso",
+      "reason": "http_404",
+      "http_status": 404
+    }
+  ]
+}</pre>
+          </div>
+
+          <div class="example-block">
+            <h4>Gestion utilisateur interne + abonnement</h4>
+            <p class="req-label">Requête — POST /api/v1/users/upsert</p>
+            <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/users/upsert \
+  -H "X-Intranet-Token: VOTRE_TOKEN" \
+  -H "X-Actor-Type: admin" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_type": "internal",
+    "username": "noc",
+    "email": "noc@jbsan.fr",
+    "display_name": "Équipe NOC"
+  }'</pre>
+            <p class="req-label">Requête — POST /api/v1/users/12/subscriptions</p>
+            <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/users/12/subscriptions \
+  -H "X-Intranet-Token: VOTRE_TOKEN" \
+  -H "X-Actor-Type: admin" \
+  -H "Content-Type: application/json" \
+  -d '{ "iso_item_id": 3, "notify_mode": "hourly_digest", "enabled": true }'</pre>
+          </div>
+        </section>
+
+        <section id="ex-ui-session">
+          <h3>5. Sessions UI (navigateur — sans exposer le token)</h3>
+
+          <div class="example-block">
+            <h4>Console admin — login puis appels</h4>
+            <p class="req-label">Étape 1 — POST /api/v1/admin/ui-login (sans token)</p>
+            <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/admin/ui-login \
+  -H "Content-Type: application/json" \
+  -d '{ "password": "mot-de-passe-admin" }'</pre>
+            <p class="res-label">Réponse 200</p>
+            <pre>{
+  "ok": true,
+  "ui_session": "eyJhY3RvciI6eyJ1c2VybmFtZSI6ImFkbWluIiwidHlwZSI6ImFkbWluIn19….signature",
+  "actor": { "username": "admin", "type": "admin" }
+}</pre>
+            <p class="req-label">Étape 2 — utiliser X-UI-Session</p>
+            <pre>curl -s http://127.0.0.1:3088/api/v1/admin/overview \
+  -H "X-UI-Session: eyJhY3RvciI6eyJ1c2VybmFtZSI6ImFkbWluIiwidHlwZSI6ImFkbWluIn19….signature"</pre>
+            <p class="note">Si <code>ADMIN_UI_AUTH_REQUIRED=false</code>, le corps <code>password</code> peut être vide.</p>
+          </div>
+
+          <div class="example-block">
+            <h4>Page publique — session opérateur automatique</h4>
+            <p class="req-label">Requête — POST /api/v1/public/ui-session (sans token)</p>
+            <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/public/ui-session \
+  -H "Content-Type: application/json"</pre>
+            <p class="res-label">Réponse 200 — si PUBLIC_UI_ALLOW_ACTIONS + PUBLIC_UI_ACTIONS_AUTO_AUTH</p>
+            <pre>{
+  "ok": true,
+  "ui_session": "…",
+  "actor": { "username": "operator", "type": "internal" }
+}</pre>
+            <p class="req-label">Scan depuis la page publique</p>
+            <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/scans/run \
+  -H "X-UI-Session: …" \
+  -H "Content-Type: application/json" \
+  -d '{ "notify": true }'</pre>
+          </div>
+        </section>
+
+        <section id="ex-edge">
+          <h3>6. Cas particuliers et erreurs</h3>
+
+          <div class="example-block">
+            <h4>401 — Token manquant ou invalide</h4>
+            <pre>curl -s http://127.0.0.1:3088/api/v1/iso-items</pre>
+            <p class="res-label">Réponse 401</p>
+            <pre>{ "error": "unauthorized" }</pre>
+          </div>
+
+          <div class="example-block">
+            <h4>403 — Acteur insuffisant</h4>
+            <p class="req-label">internal appelle une route admin</p>
+            <pre>curl -s http://127.0.0.1:3088/api/v1/admin/overview \
+  -H "X-Intranet-Token: VOTRE_TOKEN" \
+  -H "X-Actor-Type: internal"</pre>
+            <p class="res-label">Réponse 403</p>
+            <pre>{ "error": "admin_required" }</pre>
+            <p class="req-label">public sans X-Public-Email sur une destination d'un autre user</p>
+            <pre>{ "error": "forbidden" }</pre>
+          </div>
+
+          <div class="example-block">
+            <h4>403 — Actions publiques désactivées</h4>
+            <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/scans/run \
+  -H "X-Intranet-Token: VOTRE_TOKEN" \
+  -H "X-Actor-Type: internal"</pre>
+            <p class="res-label">Si PUBLIC_UI_ALLOW_ACTIONS=false et acteur non admin</p>
+            <pre>{ "error": "public_actions_disabled" }</pre>
+          </div>
+
+          <div class="example-block">
+            <h4>409 — Vérification liens déjà en cours</h4>
+            <pre>{ "error": "link_check_already_running" }</pre>
+          </div>
+
+          <div class="example-block">
+            <h4>502 — Échec téléchargement local</h4>
+            <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/releases/99/download \
+  -H "X-Intranet-Token: VOTRE_TOKEN" \
+  -H "X-Actor-Type: admin"</pre>
+            <p class="res-label">Réponse 502</p>
+            <pre>{
+  "ok": false,
+  "error": "download_failed",
+  "message": "HTTP 404"
+}</pre>
+            <p class="note">Le message réel est dans <code>message</code>, pas dans <code>error</code>.</p>
+          </div>
+
+          <div class="example-block">
+            <h4>502 — Échec envoi notification (test destination)</h4>
+            <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/destinations/8/test \
+  -H "X-Intranet-Token: VOTRE_TOKEN" \
+  -H "X-Actor-Type: public" \
+  -H "X-Public-Email: user@example.com" \
+  -H "Content-Type: application/json" \
+  -d '{ "message": "Test" }'</pre>
+            <p class="res-label">Réponse 502</p>
+            <pre>{
+  "error": "delivery_failed",
+  "channel": "discord_webhook",
+  "code": "ENOTFOUND",
+  "message": "getaddrinfo ENOTFOUND discord.com"
+}</pre>
+          </div>
+
+          <div class="example-block">
+            <h4>400 — Validation métier</h4>
+            <pre>{ "error": "discovery_regex_required" }</pre>
+            <pre>{ "error": "email_required" }</pre>
+            <pre>{ "error": "iso_item_ids_required" }</pre>
+          </div>
+
+          <div class="example-block">
+            <h4>404 — Ressource absente</h4>
+            <pre>{ "error": "iso_item_not_found" }</pre>
+            <pre>{ "error": "release_not_found" }</pre>
+            <pre>{ "error": "user_not_found" }</pre>
+            <pre>{ "error": "local_file_not_found" }</pre>
+          </div>
+
+          <div class="example-block">
+            <h4>409 — Suppression utilisateur public avec abonnements actifs</h4>
+            <pre>curl -s -X DELETE "http://127.0.0.1:3088/api/v1/public/users/by-email?email=user@example.com" \
+  -H "X-Intranet-Token: VOTRE_TOKEN"</pre>
+            <p class="res-label">Réponse 409</p>
+            <pre>{ "error": "user_has_active_subscriptions" }</pre>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

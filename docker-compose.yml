@@ -1,0 +1,31 @@
+# ISO Watcher — SQLite (image pré-construite, mise à jour : docker compose pull && up -d)
+# Prérequis : cp .env.example .env — INTRANET_SHARED_TOKEN + ISO_WATCHER_IMAGE si registry privé
+# Build local : docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+services:
+  iso-watcher:
+    image: ${ISO_WATCHER_IMAGE:-ghcr.io/jbsan/iso-watcher:latest}
+    pull_policy: always
+    container_name: iso-watcher
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3088}:3088"
+    env_file:
+      - .env
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: 3088
+      DB_DRIVER: sqlite
+      SQLITE_PATH: /app/data/iso-watcher.db
+      STORAGE_ROOT: /app/data/storage
+      SCAN_STARTUP_RECOVERY: interrupt
+    volumes:
+      - iso_watcher_data:/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3088/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+
+volumes:
+  iso_watcher_data:

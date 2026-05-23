@@ -1,0 +1,55 @@
+# ISO Watcher avec MySQL
+# Prérequis : cp .env.example .env — INTRANET_SHARED_TOKEN + DB_DRIVER=mysql (ou variables ci-dessous)
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: iso-watcher-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootchangeme}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-iso_watcher}
+      MYSQL_USER: ${MYSQL_USER:-iso_watcher}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-changeme}
+    volumes:
+      - iso_watcher_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${MYSQL_ROOT_PASSWORD:-rootchangeme}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  iso-watcher:
+    image: ${ISO_WATCHER_IMAGE:-ghcr.io/jbsan/iso-watcher:latest}
+    pull_policy: always
+    container_name: iso-watcher
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT:-3088}:3088"
+    env_file:
+      - .env
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: 3088
+      DB_DRIVER: mysql
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: ${MYSQL_USER:-iso_watcher}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-changeme}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-iso_watcher}
+      STORAGE_ROOT: /app/data/storage
+      SCAN_STARTUP_RECOVERY: interrupt
+    volumes:
+      - iso_watcher_storage:/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3088/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  iso_watcher_mysql:
+  iso_watcher_storage:
