@@ -1,0 +1,1574 @@
+{
+  "schema_version": 1,
+  "catalog_id": "iso-watcher-community",
+  "updated_at": "2026-05-23",
+  "generated_at": "2026-05-23T20:23:48.216Z",
+  "generator": "iso-watcher-export",
+  "preset_count": 36,
+  "presets": [
+      {
+          "id": "debian-netinst-stable-amd64",
+          "label": "Debian Stable Netinst AMD64",
+          "description": "ISO Debian stable netinst pour AMD64 / x86_64.",
+          "tags": [
+              "linux",
+              "debian",
+              "netinst",
+              "stable",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Debian Stable Netinst AMD64",
+              "system_family": "linux",
+              "distribution": "debian",
+              "edition": "netinst",
+              "version_track": "stable",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO Debian stable netinst pour AMD64 / x86_64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "debian-official-current-amd64-netinst",
+                  "name": "Debian official current amd64 netinst",
+                  "protocol": "https",
+                  "url": "https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "debian-(?<version>[0-9.]+)-amd64-netinst\\.iso$",
+                  "version_regex": "debian-(?<version>[0-9.]+)-amd64-netinst\\.iso$",
+                  "checksum_regex": "SHA256SUMS",
+                  "discovery_enabled": false,
+                  "discovery_depth": 0,
+                  "discovery_regex": null,
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "debian-netinst-stable-arm64",
+          "label": "Debian Stable Netinst ARM64",
+          "description": "ISO Debian stable netinst pour ARM64 / AArch64.",
+          "tags": [
+              "linux",
+              "debian",
+              "netinst",
+              "stable",
+              "arm64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Debian Stable Netinst ARM64",
+              "system_family": "linux",
+              "distribution": "debian",
+              "edition": "netinst",
+              "version_track": "stable",
+              "architecture": "arm64",
+              "file_type": "iso",
+              "description": "ISO Debian stable netinst pour ARM64 / AArch64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "debian-official-current-arm64-netinst",
+                  "name": "Debian official current arm64 netinst",
+                  "protocol": "https",
+                  "url": "https://cdimage.debian.org/debian-cd/current/arm64/iso-cd/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "debian-(?<version>[0-9.]+)-arm64-netinst\\.iso$",
+                  "version_regex": "debian-(?<version>[0-9.]+)-arm64-netinst\\.iso$",
+                  "checksum_regex": "SHA256SUMS",
+                  "discovery_enabled": false,
+                  "discovery_depth": 0,
+                  "discovery_regex": null,
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "debian-dvd-stable-amd64",
+          "label": "Debian Stable DVD AMD64",
+          "description": "ISO Debian stable DVD complet pour AMD64.",
+          "tags": [
+              "linux",
+              "debian",
+              "dvd",
+              "stable",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Debian Stable DVD AMD64",
+              "system_family": "linux",
+              "distribution": "debian",
+              "edition": "dvd",
+              "version_track": "stable",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO Debian stable DVD complet pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "debian-official-current-amd64-dvd",
+                  "name": "Debian official current amd64 DVD",
+                  "protocol": "https",
+                  "url": "https://cdimage.debian.org/debian-cd/current/amd64/iso-dvd/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "debian-(?<version>[0-9.]+)-amd64-DVD-1\\.iso$",
+                  "version_regex": "debian-(?<version>[0-9.]+)-amd64-DVD-1\\.iso$",
+                  "checksum_regex": "SHA256SUMS",
+                  "discovery_enabled": false,
+                  "discovery_depth": 0,
+                  "discovery_regex": null,
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "debian-netinst-testing-amd64",
+          "label": "Debian Testing Netinst AMD64",
+          "description": "ISO Debian testing netinst pour AMD64.",
+          "tags": [
+              "linux",
+              "debian",
+              "netinst",
+              "testing",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Debian Testing Netinst AMD64",
+              "system_family": "linux",
+              "distribution": "debian",
+              "edition": "netinst",
+              "version_track": "testing",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO Debian testing netinst pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "debian-official-testing-daily-amd64-netinst",
+                  "name": "Debian official testing daily amd64 netinst",
+                  "protocol": "https",
+                  "url": "https://cdimage.debian.org/cdimage/daily-builds/daily/current/amd64/iso-cd/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "debian-testing-amd64-netinst\\.iso$",
+                  "version_regex": "debian-(?<version>testing)-amd64-netinst\\.iso$",
+                  "checksum_regex": "SHA256SUMS",
+                  "discovery_enabled": false,
+                  "discovery_depth": 0,
+                  "discovery_regex": null,
+                  "priority": 20,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "ubuntu-desktop-lts-amd64",
+          "label": "Ubuntu Desktop LTS AMD64",
+          "description": "ISO Ubuntu Desktop LTS pour AMD64.",
+          "tags": [
+              "linux",
+              "ubuntu",
+              "desktop",
+              "lts",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Ubuntu Desktop LTS AMD64",
+              "system_family": "linux",
+              "distribution": "ubuntu",
+              "edition": "desktop",
+              "version_track": "lts",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO Ubuntu Desktop LTS pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "ubuntu-releases-lts-desktop-amd64-auto-discovery",
+                  "name": "Ubuntu releases LTS desktop amd64 auto-discovery",
+                  "protocol": "https",
+                  "url": "https://releases.ubuntu.com/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "ubuntu-(?<version>[0-9.]+)-desktop-amd64\\.iso$",
+                  "version_regex": "ubuntu-(?<version>[0-9.]+)-desktop-amd64\\.iso$",
+                  "checksum_regex": "SHA256SUMS",
+                  "discovery_enabled": true,
+                  "discovery_depth": 1,
+                  "discovery_regex": "^[0-9][02468]\\.04(?:\\.[0-9]+)?/$",
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "ubuntu-server-lts-amd64",
+          "label": "Ubuntu Server LTS AMD64",
+          "description": "ISO Ubuntu Server LTS pour AMD64.",
+          "tags": [
+              "linux",
+              "ubuntu",
+              "server",
+              "lts",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Ubuntu Server LTS AMD64",
+              "system_family": "linux",
+              "distribution": "ubuntu",
+              "edition": "server",
+              "version_track": "lts",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO Ubuntu Server LTS pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "ubuntu-releases-lts-server-amd64-auto-discovery",
+                  "name": "Ubuntu releases LTS server amd64 auto-discovery",
+                  "protocol": "https",
+                  "url": "https://releases.ubuntu.com/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "ubuntu-(?<version>[0-9.]+)-live-server-amd64\\.iso$",
+                  "version_regex": "ubuntu-(?<version>[0-9.]+)-live-server-amd64\\.iso$",
+                  "checksum_regex": "SHA256SUMS",
+                  "discovery_enabled": true,
+                  "discovery_depth": 1,
+                  "discovery_regex": "^[0-9][02468]\\.04(?:\\.[0-9]+)?/$",
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "ubuntu-server-lts-arm64",
+          "label": "Ubuntu Server LTS ARM64",
+          "description": "ISO Ubuntu Server LTS pour ARM64.",
+          "tags": [
+              "linux",
+              "ubuntu",
+              "server",
+              "lts",
+              "arm64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Ubuntu Server LTS ARM64",
+              "system_family": "linux",
+              "distribution": "ubuntu",
+              "edition": "server",
+              "version_track": "lts",
+              "architecture": "arm64",
+              "file_type": "iso",
+              "description": "ISO Ubuntu Server LTS pour ARM64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "ubuntu-cdimage-lts-server-arm64-auto-discovery",
+                  "name": "Ubuntu cdimage LTS server arm64 auto-discovery",
+                  "protocol": "https",
+                  "url": "https://cdimage.ubuntu.com/releases/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "ubuntu-(?<version>[0-9.]+)-live-server-arm64\\.iso$",
+                  "version_regex": "ubuntu-(?<version>[0-9.]+)-live-server-arm64\\.iso$",
+                  "checksum_regex": "SHA256SUMS",
+                  "discovery_enabled": true,
+                  "discovery_depth": 2,
+                  "discovery_regex": "^(?:[0-9][02468]\\.04(?:\\.[0-9]+)?|release)/$",
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "ubuntu-desktop-latest-amd64",
+          "label": "Ubuntu Desktop Latest AMD64",
+          "description": "ISO Ubuntu Desktop dernière version standard ou LTS selon source.",
+          "tags": [
+              "linux",
+              "ubuntu",
+              "desktop",
+              "latest",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Ubuntu Desktop Latest AMD64",
+              "system_family": "linux",
+              "distribution": "ubuntu",
+              "edition": "desktop",
+              "version_track": "latest",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO Ubuntu Desktop dernière version standard ou LTS selon source.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "ubuntu-releases-latest-desktop-amd64-auto-discov",
+                  "name": "Ubuntu releases latest desktop amd64 auto-discovery",
+                  "protocol": "https",
+                  "url": "https://releases.ubuntu.com/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "ubuntu-(?<version>[0-9.]+)-desktop-amd64\\.iso$",
+                  "version_regex": "ubuntu-(?<version>[0-9.]+)-desktop-amd64\\.iso$",
+                  "checksum_regex": "SHA256SUMS",
+                  "discovery_enabled": true,
+                  "discovery_depth": 1,
+                  "discovery_regex": "^[0-9]{2}\\.[0-9]{2}(?:\\.[0-9]+)?/$",
+                  "priority": 20,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "ubuntu-server-latest-amd64",
+          "label": "Ubuntu Server Latest AMD64",
+          "description": "ISO Ubuntu Server dernière version standard ou LTS selon source.",
+          "tags": [
+              "linux",
+              "ubuntu",
+              "server",
+              "latest",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Ubuntu Server Latest AMD64",
+              "system_family": "linux",
+              "distribution": "ubuntu",
+              "edition": "server",
+              "version_track": "latest",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO Ubuntu Server dernière version standard ou LTS selon source.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "ubuntu-releases-latest-server-amd64-auto-discove",
+                  "name": "Ubuntu releases latest server amd64 auto-discovery",
+                  "protocol": "https",
+                  "url": "https://releases.ubuntu.com/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "ubuntu-(?<version>[0-9.]+)-live-server-amd64\\.iso$",
+                  "version_regex": "ubuntu-(?<version>[0-9.]+)-live-server-amd64\\.iso$",
+                  "checksum_regex": "SHA256SUMS",
+                  "discovery_enabled": true,
+                  "discovery_depth": 1,
+                  "discovery_regex": "^[0-9]{2}\\.[0-9]{2}(?:\\.[0-9]+)?/$",
+                  "priority": 20,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "linuxmint-cinnamon-stable-amd64",
+          "label": "Linux Mint Cinnamon AMD64",
+          "description": "ISO Linux Mint Cinnamon stable pour AMD64.",
+          "tags": [
+              "linux",
+              "linuxmint",
+              "cinnamon",
+              "stable",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Linux Mint Cinnamon AMD64",
+              "system_family": "linux",
+              "distribution": "linuxmint",
+              "edition": "cinnamon",
+              "version_track": "stable",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO Linux Mint Cinnamon stable pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "linux-mint-stable-cinnamon-auto-discovery",
+                  "name": "Linux Mint stable cinnamon auto-discovery",
+                  "protocol": "https",
+                  "url": "https://mirrors.cicku.me/linuxmint/iso/stable/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "linuxmint-(?<version>[0-9.]+)-cinnamon-64bit\\.iso$",
+                  "version_regex": "linuxmint-(?<version>[0-9.]+)-cinnamon-64bit\\.iso$",
+                  "checksum_regex": "sha256sum\\.txt",
+                  "discovery_enabled": true,
+                  "discovery_depth": 1,
+                  "discovery_regex": "^[0-9]+\\.[0-9]+/$",
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "linuxmint-mate-stable-amd64",
+          "label": "Linux Mint MATE AMD64",
+          "description": "ISO Linux Mint MATE stable pour AMD64.",
+          "tags": [
+              "linux",
+              "linuxmint",
+              "mate",
+              "stable",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Linux Mint MATE AMD64",
+              "system_family": "linux",
+              "distribution": "linuxmint",
+              "edition": "mate",
+              "version_track": "stable",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO Linux Mint MATE stable pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "linux-mint-stable-mate-auto-discovery",
+                  "name": "Linux Mint stable mate auto-discovery",
+                  "protocol": "https",
+                  "url": "https://mirrors.cicku.me/linuxmint/iso/stable/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "linuxmint-(?<version>[0-9.]+)-mate-64bit\\.iso$",
+                  "version_regex": "linuxmint-(?<version>[0-9.]+)-mate-64bit\\.iso$",
+                  "checksum_regex": "sha256sum\\.txt",
+                  "discovery_enabled": true,
+                  "discovery_depth": 1,
+                  "discovery_regex": "^[0-9]+\\.[0-9]+/$",
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "linuxmint-xfce-stable-amd64",
+          "label": "Linux Mint Xfce AMD64",
+          "description": "ISO Linux Mint Xfce stable pour AMD64.",
+          "tags": [
+              "linux",
+              "linuxmint",
+              "xfce",
+              "stable",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Linux Mint Xfce AMD64",
+              "system_family": "linux",
+              "distribution": "linuxmint",
+              "edition": "xfce",
+              "version_track": "stable",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO Linux Mint Xfce stable pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "linux-mint-stable-xfce-auto-discovery",
+                  "name": "Linux Mint stable xfce auto-discovery",
+                  "protocol": "https",
+                  "url": "https://mirrors.cicku.me/linuxmint/iso/stable/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "linuxmint-(?<version>[0-9.]+)-xfce-64bit\\.iso$",
+                  "version_regex": "linuxmint-(?<version>[0-9.]+)-xfce-64bit\\.iso$",
+                  "checksum_regex": "sha256sum\\.txt",
+                  "discovery_enabled": true,
+                  "discovery_depth": 1,
+                  "discovery_regex": "^[0-9]+\\.[0-9]+/$",
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "proxmox-ve-latest-amd64",
+          "label": "Proxmox VE Installer AMD64",
+          "description": "ISO installateur Proxmox VE.",
+          "tags": [
+              "linux",
+              "proxmox",
+              "ve",
+              "latest",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Proxmox VE Installer AMD64",
+              "system_family": "linux",
+              "distribution": "proxmox",
+              "edition": "ve",
+              "version_track": "latest",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO installateur Proxmox VE.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "proxmox-enterprise-iso-listing-ve",
+                  "name": "Proxmox enterprise ISO listing VE",
+                  "protocol": "https",
+                  "url": "https://enterprise.proxmox.com/iso/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "proxmox-ve_(?<version>[0-9.\\-]+)\\.iso$",
+                  "version_regex": "proxmox-ve_(?<version>[0-9.\\-]+)\\.iso$",
+                  "checksum_regex": "\\.sha256sum$",
+                  "discovery_enabled": false,
+                  "discovery_depth": 0,
+                  "discovery_regex": null,
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "rocky-dvd-stable-amd64",
+          "label": "Rocky Linux DVD AMD64",
+          "description": "ISO Rocky Linux DVD pour AMD64.",
+          "tags": [
+              "linux",
+              "rocky",
+              "dvd",
+              "stable",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Rocky Linux DVD AMD64",
+              "system_family": "linux",
+              "distribution": "rocky",
+              "edition": "dvd",
+              "version_track": "stable",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO Rocky Linux DVD pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "rocky-linux-x86-64-dvd-auto-discovery",
+                  "name": "Rocky Linux x86_64 DVD auto-discovery",
+                  "protocol": "https",
+                  "url": "https://dl.rockylinux.org/pub/rocky/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "Rocky-(?<version>[0-9.]+)-x86_64-dvd1\\.iso$",
+                  "version_regex": "Rocky-(?<version>[0-9.]+)-x86_64-dvd1\\.iso$",
+                  "checksum_regex": "CHECKSUM",
+                  "discovery_enabled": true,
+                  "discovery_depth": 3,
+                  "discovery_regex": "^(?:[0-9]+(?:\\.[0-9]+)?|isos|x86_64)/$",
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "rocky-minimal-stable-amd64",
+          "label": "Rocky Linux Minimal AMD64",
+          "description": "ISO Rocky Linux Minimal pour AMD64.",
+          "tags": [
+              "linux",
+              "rocky",
+              "minimal",
+              "stable",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Rocky Linux Minimal AMD64",
+              "system_family": "linux",
+              "distribution": "rocky",
+              "edition": "minimal",
+              "version_track": "stable",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO Rocky Linux Minimal pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "rocky-linux-x86-64-minimal-auto-discovery",
+                  "name": "Rocky Linux x86_64 Minimal auto-discovery",
+                  "protocol": "https",
+                  "url": "https://dl.rockylinux.org/pub/rocky/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "Rocky-(?<version>[0-9.]+)-x86_64-minimal\\.iso$",
+                  "version_regex": "Rocky-(?<version>[0-9.]+)-x86_64-minimal\\.iso$",
+                  "checksum_regex": "CHECKSUM",
+                  "discovery_enabled": true,
+                  "discovery_depth": 3,
+                  "discovery_regex": "^(?:[0-9]+(?:\\.[0-9]+)?|isos|x86_64)/$",
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "rocky-boot-stable-amd64",
+          "label": "Rocky Linux Boot AMD64",
+          "description": "ISO Rocky Linux Boot pour installation réseau AMD64.",
+          "tags": [
+              "linux",
+              "rocky",
+              "boot",
+              "stable",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Rocky Linux Boot AMD64",
+              "system_family": "linux",
+              "distribution": "rocky",
+              "edition": "boot",
+              "version_track": "stable",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO Rocky Linux Boot pour installation réseau AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "rocky-linux-x86-64-boot-auto-discovery",
+                  "name": "Rocky Linux x86_64 Boot auto-discovery",
+                  "protocol": "https",
+                  "url": "https://dl.rockylinux.org/pub/rocky/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "Rocky-(?<version>[0-9.]+)-x86_64-boot\\.iso$",
+                  "version_regex": "Rocky-(?<version>[0-9.]+)-x86_64-boot\\.iso$",
+                  "checksum_regex": "CHECKSUM",
+                  "discovery_enabled": true,
+                  "discovery_depth": 3,
+                  "discovery_regex": "^(?:[0-9]+(?:\\.[0-9]+)?|isos|x86_64)/$",
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "almalinux-dvd-stable-amd64",
+          "label": "AlmaLinux DVD AMD64",
+          "description": "ISO AlmaLinux DVD pour AMD64.",
+          "tags": [
+              "linux",
+              "almalinux",
+              "dvd",
+              "stable",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "AlmaLinux DVD AMD64",
+              "system_family": "linux",
+              "distribution": "almalinux",
+              "edition": "dvd",
+              "version_track": "stable",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO AlmaLinux DVD pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "almalinux-x86-64-dvd-auto-discovery",
+                  "name": "AlmaLinux x86_64 DVD auto-discovery",
+                  "protocol": "https",
+                  "url": "https://repo.almalinux.org/almalinux/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "AlmaLinux-(?<version>[0-9.]+)-x86_64-dvd\\.iso$",
+                  "version_regex": "AlmaLinux-(?<version>[0-9.]+)-x86_64-dvd\\.iso$",
+                  "checksum_regex": "CHECKSUM",
+                  "discovery_enabled": true,
+                  "discovery_depth": 3,
+                  "discovery_regex": "^(?:[0-9]+(?:\\.[0-9]+)?|isos|x86_64)/$",
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "almalinux-minimal-stable-amd64",
+          "label": "AlmaLinux Minimal AMD64",
+          "description": "ISO AlmaLinux Minimal pour AMD64.",
+          "tags": [
+              "linux",
+              "almalinux",
+              "minimal",
+              "stable",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "AlmaLinux Minimal AMD64",
+              "system_family": "linux",
+              "distribution": "almalinux",
+              "edition": "minimal",
+              "version_track": "stable",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO AlmaLinux Minimal pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "almalinux-x86-64-minimal-auto-discovery",
+                  "name": "AlmaLinux x86_64 Minimal auto-discovery",
+                  "protocol": "https",
+                  "url": "https://repo.almalinux.org/almalinux/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "AlmaLinux-(?<version>[0-9.]+)-x86_64-minimal\\.iso$",
+                  "version_regex": "AlmaLinux-(?<version>[0-9.]+)-x86_64-minimal\\.iso$",
+                  "checksum_regex": "CHECKSUM",
+                  "discovery_enabled": true,
+                  "discovery_depth": 3,
+                  "discovery_regex": "^(?:[0-9]+(?:\\.[0-9]+)?|isos|x86_64)/$",
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "almalinux-boot-stable-amd64",
+          "label": "AlmaLinux Boot AMD64",
+          "description": "ISO AlmaLinux Boot pour installation réseau AMD64.",
+          "tags": [
+              "linux",
+              "almalinux",
+              "boot",
+              "stable",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "AlmaLinux Boot AMD64",
+              "system_family": "linux",
+              "distribution": "almalinux",
+              "edition": "boot",
+              "version_track": "stable",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO AlmaLinux Boot pour installation réseau AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "almalinux-x86-64-boot-auto-discovery",
+                  "name": "AlmaLinux x86_64 Boot auto-discovery",
+                  "protocol": "https",
+                  "url": "https://repo.almalinux.org/almalinux/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "AlmaLinux-(?<version>[0-9.]+)-x86_64-boot\\.iso$",
+                  "version_regex": "AlmaLinux-(?<version>[0-9.]+)-x86_64-boot\\.iso$",
+                  "checksum_regex": "CHECKSUM",
+                  "discovery_enabled": true,
+                  "discovery_depth": 3,
+                  "discovery_regex": "^(?:[0-9]+(?:\\.[0-9]+)?|isos|x86_64)/$",
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "opensuse-leap-dvd-stable-amd64",
+          "label": "openSUSE Leap DVD AMD64",
+          "description": "ISO openSUSE Leap DVD pour AMD64.",
+          "tags": [
+              "linux",
+              "opensuse",
+              "leap-dvd",
+              "stable",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "openSUSE Leap DVD AMD64",
+              "system_family": "linux",
+              "distribution": "opensuse",
+              "edition": "leap-dvd",
+              "version_track": "stable",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO openSUSE Leap DVD pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "opensuse-leap-offline-x86-64-auto-discovery",
+                  "name": "openSUSE Leap offline x86_64 auto-discovery",
+                  "protocol": "https",
+                  "url": "https://download.opensuse.org/distribution/leap/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "Leap-(?<version>[0-9.]+)-offline-installer-x86_64(?:-Build[0-9.]+)?\\.install\\.iso$",
+                  "version_regex": "Leap-(?<version>[0-9.]+)-offline-installer-x86_64(?:-Build[0-9.]+)?\\.install\\.iso$",
+                  "checksum_regex": "\\.sha256$",
+                  "discovery_enabled": true,
+                  "discovery_depth": 2,
+                  "discovery_regex": "^(?:[0-9]+\\.[0-9]+|offline)/$",
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "opensuse-tumbleweed-dvd-rolling-amd64",
+          "label": "openSUSE Tumbleweed DVD AMD64",
+          "description": "ISO openSUSE Tumbleweed rolling DVD pour AMD64.",
+          "tags": [
+              "linux",
+              "opensuse",
+              "tumbleweed-dvd",
+              "rolling",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "openSUSE Tumbleweed DVD AMD64",
+              "system_family": "linux",
+              "distribution": "opensuse",
+              "edition": "tumbleweed-dvd",
+              "version_track": "rolling",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO openSUSE Tumbleweed rolling DVD pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "opensuse-tumbleweed-dvd-x86-64-snapshot-iso",
+                  "name": "openSUSE Tumbleweed DVD x86_64 snapshot ISO",
+                  "protocol": "https",
+                  "url": "https://download.opensuse.org/tumbleweed/iso/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "openSUSE-Tumbleweed-DVD-x86_64-Snapshot(?<version>[0-9]+)-Media\\.iso$",
+                  "version_regex": "openSUSE-Tumbleweed-DVD-x86_64-Snapshot(?<version>[0-9]+)-Media\\.iso$",
+                  "checksum_regex": "\\.sha256$",
+                  "discovery_enabled": false,
+                  "discovery_depth": 0,
+                  "discovery_regex": null,
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "opensuse-tumbleweed-net-rolling-amd64",
+          "label": "openSUSE Tumbleweed Network AMD64",
+          "description": "ISO openSUSE Tumbleweed installation réseau pour AMD64.",
+          "tags": [
+              "linux",
+              "opensuse",
+              "tumbleweed-net",
+              "rolling",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "openSUSE Tumbleweed Network AMD64",
+              "system_family": "linux",
+              "distribution": "opensuse",
+              "edition": "tumbleweed-net",
+              "version_track": "rolling",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO openSUSE Tumbleweed installation réseau pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "opensuse-tumbleweed-net-x86-64-snapshot-iso",
+                  "name": "openSUSE Tumbleweed NET x86_64 snapshot ISO",
+                  "protocol": "https",
+                  "url": "https://download.opensuse.org/tumbleweed/iso/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "openSUSE-Tumbleweed-NET-x86_64-Snapshot(?<version>[0-9]+)-Media\\.iso$",
+                  "version_regex": "openSUSE-Tumbleweed-NET-x86_64-Snapshot(?<version>[0-9]+)-Media\\.iso$",
+                  "checksum_regex": "\\.sha256$",
+                  "discovery_enabled": false,
+                  "discovery_depth": 0,
+                  "discovery_regex": null,
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "archlinux-releng-rolling-amd64",
+          "label": "Arch Linux AMD64",
+          "description": "ISO Arch Linux rolling mensuelle pour AMD64.",
+          "tags": [
+              "linux",
+              "archlinux",
+              "releng",
+              "rolling",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Arch Linux AMD64",
+              "system_family": "linux",
+              "distribution": "archlinux",
+              "edition": "releng",
+              "version_track": "rolling",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO Arch Linux rolling mensuelle pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "arch-linux-latest-iso-mirror-fr",
+                  "name": "Arch Linux latest ISO mirror FR",
+                  "protocol": "https",
+                  "url": "https://mir.archlinux.fr/iso/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "archlinux-(?<version>[0-9.]+)-x86_64\\.iso$",
+                  "version_regex": "archlinux-(?<version>[0-9.]+)-x86_64\\.iso$",
+                  "checksum_regex": "sha256sums\\.txt",
+                  "discovery_enabled": true,
+                  "discovery_depth": 2,
+                  "discovery_regex": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}/$",
+                  "priority": 10,
+                  "enabled": true
+              },
+              {
+                  "key": "arch-linux-latest-iso-geo-mirror",
+                  "name": "Arch Linux latest ISO geo mirror",
+                  "protocol": "https",
+                  "url": "https://archive.archlinux.org/iso/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "archlinux-(?<version>[0-9.]+)-x86_64\\.iso$",
+                  "version_regex": "archlinux-(?<version>[0-9.]+)-x86_64\\.iso$",
+                  "checksum_regex": "sha256sums\\.txt",
+                  "discovery_enabled": true,
+                  "discovery_depth": 2,
+                  "discovery_regex": "^[0-9]{4}.[0-9]{2}.[0-9]{2}/$",
+                  "priority": 20,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "kali-installer-latest-amd64",
+          "label": "Kali Linux Installer AMD64",
+          "description": "ISO installateur Kali Linux pour AMD64.",
+          "tags": [
+              "linux",
+              "kali",
+              "installer",
+              "latest",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Kali Linux Installer AMD64",
+              "system_family": "linux",
+              "distribution": "kali",
+              "edition": "installer",
+              "version_track": "latest",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO installateur Kali Linux pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "kali-current-installer-amd64-iso",
+                  "name": "Kali current installer amd64 ISO",
+                  "protocol": "https",
+                  "url": "https://cdimage.kali.org/current/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "kali-linux-(?<version>[0-9.]+)-installer-amd64\\.iso$",
+                  "version_regex": "kali-linux-(?<version>[0-9.]+)-installer-amd64\\.iso$",
+                  "checksum_regex": "SHA256SUMS",
+                  "discovery_enabled": false,
+                  "discovery_depth": 0,
+                  "discovery_regex": null,
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "kali-live-latest-amd64",
+          "label": "Kali Linux Live AMD64",
+          "description": "ISO live Kali Linux pour AMD64.",
+          "tags": [
+              "linux",
+              "kali",
+              "live",
+              "latest",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Kali Linux Live AMD64",
+              "system_family": "linux",
+              "distribution": "kali",
+              "edition": "live",
+              "version_track": "latest",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO live Kali Linux pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "kali-current-live-amd64-iso",
+                  "name": "Kali current live amd64 ISO",
+                  "protocol": "https",
+                  "url": "https://cdimage.kali.org/current/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "kali-linux-(?<version>[0-9.]+)-live-amd64\\.iso$",
+                  "version_regex": "kali-linux-(?<version>[0-9.]+)-live-amd64\\.iso$",
+                  "checksum_regex": "SHA256SUMS",
+                  "discovery_enabled": false,
+                  "discovery_depth": 0,
+                  "discovery_regex": null,
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "endeavouros-offline-online-rolling-amd64",
+          "label": "EndeavourOS AMD64",
+          "description": "ISO EndeavourOS pour AMD64.",
+          "tags": [
+              "linux",
+              "endeavouros",
+              "offline-online",
+              "rolling",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "EndeavourOS AMD64",
+              "system_family": "linux",
+              "distribution": "endeavouros",
+              "edition": "offline-online",
+              "version_track": "rolling",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO EndeavourOS pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "endeavouros-official-mirror-page",
+                  "name": "EndeavourOS official mirror page",
+                  "protocol": "https",
+                  "url": "https://endeavouros.com/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "EndeavourOS_[A-Za-z0-9\\-]+-(?<version>[0-9.]+)\\.iso$",
+                  "version_regex": "EndeavourOS_[A-Za-z0-9\\-]+-(?<version>[0-9.]+)\\.iso$",
+                  "checksum_regex": "\\.sha512$",
+                  "discovery_enabled": false,
+                  "discovery_depth": 0,
+                  "discovery_regex": null,
+                  "priority": 30,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "mxlinux-xfce-stable-amd64",
+          "label": "MX Linux Xfce AMD64",
+          "description": "ISO MX Linux Xfce stable pour AMD64.",
+          "tags": [
+              "linux",
+              "mxlinux",
+              "xfce",
+              "stable",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "MX Linux Xfce AMD64",
+              "system_family": "linux",
+              "distribution": "mxlinux",
+              "edition": "xfce",
+              "version_track": "stable",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO MX Linux Xfce stable pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "mx-linux-xfce-final-iso-mirror",
+                  "name": "MX Linux Xfce final ISO mirror",
+                  "protocol": "https",
+                  "url": "https://ftp.u-picardie.fr/pub/mxlinux-iso/MX/Final/Xfce/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "MX-(?<version>[0-9.]+)_Xfce_x64\\.iso$",
+                  "version_regex": "MX-(?<version>[0-9.]+)_Xfce_x64\\.iso$",
+                  "checksum_regex": "\\.sha256$",
+                  "discovery_enabled": false,
+                  "discovery_depth": 0,
+                  "discovery_regex": null,
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "zorin-core-stable-amd64",
+          "label": "Zorin OS Core AMD64",
+          "description": "ISO Zorin OS Core pour AMD64.",
+          "tags": [
+              "linux",
+              "zorin",
+              "core",
+              "stable",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Zorin OS Core AMD64",
+              "system_family": "linux",
+              "distribution": "zorin",
+              "edition": "core",
+              "version_track": "stable",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO Zorin OS Core pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "zorin-os-core-auto-discovery",
+                  "name": "Zorin OS Core auto-discovery",
+                  "protocol": "https",
+                  "url": "https://mirrors.dotsrc.org/zorinos/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "Zorin-OS-(?<version>[0-9.]+)-Core-64-bit.*\\.iso$",
+                  "version_regex": "Zorin-OS-(?<version>[0-9.]+)-Core-64-bit.*\\.iso$",
+                  "checksum_regex": "SHA256SUMS\\.txt",
+                  "discovery_enabled": true,
+                  "discovery_depth": 1,
+                  "discovery_regex": "^[0-9]+/$",
+                  "priority": 40,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "nixos-graphical-stable-amd64",
+          "label": "NixOS Graphical AMD64",
+          "description": "ISO NixOS graphique stable pour AMD64.",
+          "tags": [
+              "linux",
+              "nixos",
+              "graphical",
+              "stable",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "NixOS Graphical AMD64",
+              "system_family": "linux",
+              "distribution": "nixos",
+              "edition": "graphical",
+              "version_track": "stable",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO NixOS graphique stable pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "nixos-graphical-download-page",
+                  "name": "NixOS graphical download page",
+                  "protocol": "https",
+                  "url": "https://nixos.org/download/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "latest-nixos-gnome-x86_64-linux\\.iso",
+                  "version_regex": "latest-nixos-(?<version>gnome)-x86_64-linux\\.iso",
+                  "checksum_regex": "\\.sha256",
+                  "discovery_enabled": false,
+                  "discovery_depth": 0,
+                  "discovery_regex": null,
+                  "priority": 30,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "nixos-minimal-stable-amd64",
+          "label": "NixOS Minimal AMD64",
+          "description": "ISO NixOS minimal stable pour AMD64.",
+          "tags": [
+              "linux",
+              "nixos",
+              "minimal",
+              "stable",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "NixOS Minimal AMD64",
+              "system_family": "linux",
+              "distribution": "nixos",
+              "edition": "minimal",
+              "version_track": "stable",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO NixOS minimal stable pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "nixos-minimal-download-page",
+                  "name": "NixOS minimal download page",
+                  "protocol": "https",
+                  "url": "https://nixos.org/download/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "latest-nixos-minimal-x86_64-linux\\.iso",
+                  "version_regex": "latest-nixos-(?<version>minimal)-x86_64-linux\\.iso",
+                  "checksum_regex": "\\.sha256",
+                  "discovery_enabled": false,
+                  "discovery_depth": 0,
+                  "discovery_regex": null,
+                  "priority": 30,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "gentoo-minimal-latest-amd64",
+          "label": "Gentoo Minimal AMD64",
+          "description": "ISO Gentoo minimal pour AMD64.",
+          "tags": [
+              "linux",
+              "gentoo",
+              "minimal",
+              "latest",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Gentoo Minimal AMD64",
+              "system_family": "linux",
+              "distribution": "gentoo",
+              "edition": "minimal",
+              "version_track": "latest",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO Gentoo minimal pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "gentoo-current-install-minimal-amd64-iso",
+                  "name": "Gentoo current install minimal amd64 ISO",
+                  "protocol": "https",
+                  "url": "https://distfiles.gentoo.org/releases/amd64/autobuilds/current-install-amd64-minimal/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "install-amd64-minimal-(?<version>[0-9TZ]+)\\.iso$",
+                  "version_regex": "install-amd64-minimal-(?<version>[0-9TZ]+)\\.iso$",
+                  "checksum_regex": "DIGESTS",
+                  "discovery_enabled": false,
+                  "discovery_depth": 0,
+                  "discovery_regex": null,
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "gentoo-livegui-latest-amd64",
+          "label": "Gentoo LiveGUI AMD64",
+          "description": "ISO Gentoo LiveGUI pour AMD64.",
+          "tags": [
+              "linux",
+              "gentoo",
+              "livegui",
+              "latest",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Gentoo LiveGUI AMD64",
+              "system_family": "linux",
+              "distribution": "gentoo",
+              "edition": "livegui",
+              "version_track": "latest",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO Gentoo LiveGUI pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "gentoo-current-livegui-amd64-iso",
+                  "name": "Gentoo current livegui amd64 ISO",
+                  "protocol": "https",
+                  "url": "https://distfiles.gentoo.org/releases/amd64/autobuilds/current-livegui-amd64/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "livegui-amd64-(?<version>[0-9TZ]+)\\.iso$",
+                  "version_regex": "livegui-amd64-(?<version>[0-9TZ]+)\\.iso$",
+                  "checksum_regex": "DIGESTS",
+                  "discovery_enabled": false,
+                  "discovery_depth": 0,
+                  "discovery_regex": null,
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "clonezilla-live-stable-amd64",
+          "label": "Clonezilla Live AMD64",
+          "description": "ISO Clonezilla Live stable pour AMD64.",
+          "tags": [
+              "linux",
+              "clonezilla",
+              "live",
+              "stable",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Clonezilla Live AMD64",
+              "system_family": "linux",
+              "distribution": "clonezilla",
+              "edition": "live",
+              "version_track": "stable",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO Clonezilla Live stable pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "clonezilla-stable-amd64-mirror-listing",
+                  "name": "Clonezilla stable amd64 mirror listing",
+                  "protocol": "https",
+                  "url": "https://free.nchc.org.tw/clonezilla-live/stable/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "clonezilla-live-(?<version>[0-9.\\-]+)-amd64\\.iso$",
+                  "version_regex": "clonezilla-live-(?<version>[0-9.\\-]+)-amd64\\.iso$",
+                  "checksum_regex": "SHA256SUMS",
+                  "discovery_enabled": false,
+                  "discovery_depth": 0,
+                  "discovery_regex": null,
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "gparted-live-stable-amd64",
+          "label": "GParted Live AMD64",
+          "description": "ISO GParted Live stable pour AMD64.",
+          "tags": [
+              "linux",
+              "gparted",
+              "live",
+              "stable",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "GParted Live AMD64",
+              "system_family": "linux",
+              "distribution": "gparted",
+              "edition": "live",
+              "version_track": "stable",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO GParted Live stable pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "gparted-official-download-page",
+                  "name": "GParted official download page",
+                  "protocol": "https",
+                  "url": "https://gparted.org/download.php",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "gparted-live-(?<version>[0-9.\\-]+)-amd64\\.iso$",
+                  "version_regex": "gparted-live-(?<version>[0-9.\\-]+)-amd64\\.iso$",
+                  "checksum_regex": null,
+                  "discovery_enabled": false,
+                  "discovery_depth": 0,
+                  "discovery_regex": null,
+                  "priority": 40,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "systemrescue-live-latest-amd64",
+          "label": "SystemRescue AMD64",
+          "description": "ISO SystemRescue pour AMD64.",
+          "tags": [
+              "linux",
+              "systemrescue",
+              "live",
+              "latest",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "SystemRescue AMD64",
+              "system_family": "linux",
+              "distribution": "systemrescue",
+              "edition": "live",
+              "version_track": "latest",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": "ISO SystemRescue pour AMD64.",
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "systemrescue-official-download-page",
+                  "name": "SystemRescue official download page",
+                  "protocol": "https",
+                  "url": "https://www.system-rescue.org/Download/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "systemrescue-(?<version>[0-9.]+)-amd64\\.iso$",
+                  "version_regex": "systemrescue-(?<version>[0-9.]+)-amd64\\.iso$",
+                  "checksum_regex": "\\.sha256$",
+                  "discovery_enabled": false,
+                  "discovery_depth": 0,
+                  "discovery_regex": null,
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      },
+      {
+          "id": "proxmox-datacenter-manager-stable-amd64",
+          "label": "Proxmox Datacenter Manager Installer AMD64",
+          "description": null,
+          "tags": [
+              "linux",
+              "proxmox",
+              "datacenter-manager",
+              "stable",
+              "amd64"
+          ],
+          "stability": "verified",
+          "iso_item": {
+              "name": "Proxmox Datacenter Manager Installer AMD64",
+              "system_family": "linux",
+              "distribution": "proxmox",
+              "edition": "datacenter-manager",
+              "version_track": "stable",
+              "architecture": "amd64",
+              "file_type": "iso",
+              "description": null,
+              "enabled": true,
+              "is_public": true
+          },
+          "sources": [
+              {
+                  "key": "proxmox-enterprise-iso-listing-datacenter-manage",
+                  "name": "Proxmox enterprise ISO listing Datacenter Manager",
+                  "protocol": "https",
+                  "url": "https://enterprise.proxmox.com/iso/",
+                  "allow_insecure_tls": false,
+                  "ftp_passive": true,
+                  "match_regex": "proxmox-datacenter-manager_(?<version>[0-9.\\-]+)\\.iso$",
+                  "version_regex": "proxmox-datacenter-manager_(?<version>[0-9.\\-]+)\\.iso$",
+                  "checksum_regex": "\\.sha256sum$",
+                  "discovery_enabled": false,
+                  "discovery_depth": 0,
+                  "discovery_regex": null,
+                  "priority": 10,
+                  "enabled": true
+              }
+          ]
+      }
+  ]
+}

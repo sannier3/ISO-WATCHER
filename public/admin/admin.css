@@ -297,6 +297,41 @@ table.data-table tr:hover td { background: rgba(255, 255, 255, 0.02); }
 
 .presets-toolbar { margin-bottom: 0.75rem; flex-wrap: wrap; }
 .presets-list { display: flex; flex-direction: column; gap: 0.65rem; max-height: 28rem; overflow: auto; }
+.badge-update {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+}
+
+.preset-row--update {
+  border-color: rgba(245, 158, 11, 0.55);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.25);
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.preset-drift-hint {
+  flex-basis: 100%;
+  color: #fbbf24 !important;
+}
+
+.btn-warn {
+  border-color: rgba(245, 158, 11, 0.6);
+  color: #fbbf24;
+}
+
+.btn-warn:hover {
+  background: rgba(245, 158, 11, 0.15);
+}
+
+.iso-card--catalog-drift {
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.2);
+}
+
+.iso-card--catalog-drift .iso-card-head {
+  background: rgba(245, 158, 11, 0.08);
+}
+
 .preset-row {
   display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;
   padding: 0.65rem 0.75rem; border: 1px solid var(--border, #2a3344); border-radius: 8px;
@@ -457,6 +492,32 @@ code.break-all { font-family: var(--mono); font-size: 0.78rem; }
 @keyframes slideIn {
   from { opacity: 0; transform: translateX(12px); }
   to { opacity: 1; transform: none; }
+}
+
+.report-preview-frame {
+  width: 100%;
+  min-height: 420px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  margin-top: 0.75rem;
+}
+
+.report-preview-frame[hidden] {
+  display: none !important;
+}
+
+fieldset.field-span {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin: 0;
+}
+
+fieldset.field-span legend {
+  padding: 0 0.35rem;
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 @media (max-width: 768px) {

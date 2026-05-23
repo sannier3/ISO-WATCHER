@@ -254,7 +254,7 @@ Toutes les variables sont documentées dans [`.env.example`](.env.example). Ne c
 | Stockage ISO | `STORAGE_*` |
 | Scans planifiés | `SCHEDULER_*`, `SCAN_STARTUP_RECOVERY` |
 | Logs de scan | `SCAN_MAX_LOG_LINES`, `SCAN_LOG_*` (voir section dédiée) |
-| Liens morts | `LINK_CHECK_*`, `ADMIN_EMAIL` |
+| Liens morts / rapports admin | `LINK_CHECK_*`, `ADMIN_NOTIFY_CHANNELS`, `ADMIN_EMAIL`, `ADMIN_DISCORD_WEBHOOK_URL`, … |
 | Notifications | `SMTP_*`, `DELIVERY_CRON`, `DISCORD_*`, `TEAMS_*` |
 
 ## Fonctionnalités

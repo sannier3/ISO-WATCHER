@@ -35,8 +35,14 @@ const TAB_TITLES = {
   scans: ['Scans', 'Exécution et suivi des analyses'],
   storage: ['Stockage', 'Téléchargements locaux et file d\'attente'],
   notifications: ['Notifications', 'Événements et livraisons'],
+  reports: ['Rapports admin', 'Vérification des liens, historique et diffusion'],
   users: ['Utilisateurs', 'Comptes, destinations et abonnements'],
   system: ['Système', 'Santé, configuration et tests']
+};
+
+const REPORT_TYPE_LABELS = {
+  link_check: 'Vérification des liens',
+  new_releases: 'Nouvelles ISO (admin)'
 };
 
 function escapeHtml(s) {
@@ -451,6 +457,7 @@ async function refreshTab(tab) {
     else if (tab === 'scans') await loadScans();
     else if (tab === 'storage') await loadStorage();
     else if (tab === 'notifications') await loadNotifications();
+    else if (tab === 'reports') await loadReportsTab();
     else if (tab === 'users') await loadUsers();
     else if (tab === 'system') await loadSystem();
   } catch (e) {
@@ -498,6 +505,208 @@ async function loadDashboard() {
     </p>
     <p class="hint">Planificateur : ${data.config?.scheduler_enabled ? 'oui' : 'non'} (${escapeHtml(data.config?.scheduler_cron || '')})</p>
   `;
+}
+
+/* ——— Rapports admin ——— */
+function collectNotifyChannelsFromForm(form) {
+  const channels = [];
+  if (form.querySelector('[name="ch_ui"]')?.checked) channels.push('ui');
+  if (form.querySelector('[name="ch_email"]')?.checked) channels.push('email');
+  if (form.querySelector('[name="ch_discord"]')?.checked) channels.push('discord');
+  if (form.querySelector('[name="ch_teams"]')?.checked) channels.push('teams');
+  if (form.querySelector('[name="ch_webhook"]')?.checked) channels.push('webhook');
+  return channels.length ? channels : ['ui'];
+}
+
+function applyNotifyConfigToForm(cfg) {
+  const form = $('#link-check-form');
+  if (!form || !cfg) return;
+
+  const availability = cfg.channels || {};
+  const defaults = new Set(cfg.default_channels || ['ui', 'email']);
+
+  const mapping = [
+    ['ch_ui', 'ui'],
+    ['ch_email', 'email'],
+    ['ch_discord', 'discord'],
+    ['ch_teams', 'teams'],
+    ['ch_webhook', 'webhook']
+  ];
+
+  for (const [name, key] of mapping) {
+    const input = form.querySelector(`[name="${name}"]`);
+    if (!input) continue;
+    const available = key === 'ui' ? true : Boolean(availability[key]);
+    input.disabled = !available;
+    input.checked = available && defaults.has(key);
+  }
+}
+
+function formatNotifyResults(results) {
+  if (!results || typeof results !== 'object') return '—';
+  return Object.entries(results)
+    .map(([ch, r]) => `${ch}: ${r?.ok ? 'OK' : (r?.error || 'échec')}`)
+    .join(' · ');
+}
+
+async function loadNotifyConfigPanel() {
+  const pre = $('#admin-notify-config');
+  try {
+    const cfg = await api('GET', '/admin/notify-config');
+    if (pre) {
+      pre.textContent = JSON.stringify(cfg, null, 2);
+    }
+    applyNotifyConfigToForm(cfg);
+    return cfg;
+  } catch (e) {
+    if (pre) pre.textContent = e.message;
+    return null;
+  }
+}
+
+async function loadReportsList(selectId) {
+  const host = $('#reports-list');
+  if (!host) return;
+
+  host.innerHTML = '<p class="empty">Chargement…</p>';
+
+  try {
+    const data = await api('GET', '/admin/reports?limit=25');
+    const reports = data.reports || [];
+
+    if (!reports.length) {
+      host.innerHTML = '<p class="empty">Aucun rapport enregistré.</p>';
+      return;
+    }
+
+    host.innerHTML = `<table class="data-table">
+      <thead><tr><th>Date</th><th>Type</th><th>Résumé</th><th>Canaux</th><th></th></tr></thead>
+      <tbody>${reports.map((r) => {
+        const summary = r.type === 'link_check' && r.stats
+          ? `${r.stats.checked} vérifiées, ${r.stats.removed} retirées`
+          : (r.release_count != null ? `${r.release_count} release(s)` : '—');
+        const date = r.created_at
+          ? new Date(r.created_at).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })
+          : '—';
+        return `<tr>
+          <td>${escapeHtml(date)}</td>
+          <td>${escapeHtml(REPORT_TYPE_LABELS[r.type] || r.type)}</td>
+          <td>${escapeHtml(summary)}</td>
+          <td class="hint">${escapeHtml((r.channels || []).join(', '))}</td>
+          <td><button type="button" class="btn btn-ghost btn-sm" data-report-view="${escapeHtml(r.id)}">Voir</button></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+
+    host.querySelectorAll('[data-report-view]').forEach((btn) => {
+      btn.addEventListener('click', () => showReportPreview(btn.getAttribute('data-report-view')));
+    });
+
+    if (selectId) {
+      showReportPreview(selectId);
+    }
+  } catch (e) {
+    host.innerHTML = `<p class="empty">${escapeHtml(e.message)}</p>`;
+  }
+}
+
+async function showReportPreview(reportId) {
+  const frame = $('#report-preview-frame');
+  const empty = $('#report-preview-empty');
+  const meta = $('#report-preview-meta');
+  const closeBtn = $('#btn-report-close');
+
+  if (!reportId || !frame) return;
+
+  try {
+    const report = await api('GET', `/admin/reports/${encodeURIComponent(reportId)}`);
+    meta.innerHTML = `<strong>${escapeHtml(REPORT_TYPE_LABELS[report.type] || report.type)}</strong>
+      · ${escapeHtml(report.created_at || '')}
+      · ${escapeHtml(formatNotifyResults(report.notify_results))}`;
+
+    frame.srcdoc = report.html || '<p>Rapport sans contenu HTML.</p>';
+    frame.hidden = false;
+    frame.removeAttribute('hidden');
+    if (empty) {
+      empty.hidden = true;
+      empty.setAttribute('hidden', '');
+    }
+    if (closeBtn) {
+      closeBtn.hidden = false;
+      closeBtn.removeAttribute('hidden');
+    }
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+function closeReportPreview() {
+  const frame = $('#report-preview-frame');
+  const empty = $('#report-preview-empty');
+  const meta = $('#report-preview-meta');
+  const closeBtn = $('#btn-report-close');
+  if (frame) {
+    frame.hidden = true;
+    frame.setAttribute('hidden', '');
+    frame.srcdoc = '';
+  }
+  if (empty) {
+    empty.hidden = false;
+    empty.removeAttribute('hidden');
+  }
+  if (meta) meta.textContent = '';
+  if (closeBtn) {
+    closeBtn.hidden = true;
+    closeBtn.setAttribute('hidden', '');
+  }
+}
+
+async function loadReportsTab() {
+  await loadNotifyConfigPanel();
+  await loadReportsList();
+}
+
+async function runLinkCheckFromForm(e) {
+  e.preventDefault();
+  const form = e.target;
+  const fd = new FormData(form);
+  const statusEl = $('#link-check-status');
+  const channels = collectNotifyChannelsFromForm(form);
+
+  if (statusEl) {
+    statusEl.hidden = false;
+    statusEl.removeAttribute('hidden');
+    statusEl.textContent = 'Vérification en cours…';
+  }
+
+  try {
+    const r = await api('POST', '/admin/release-link-check', {
+      report_hours: Number(fd.get('report_hours')) || 24,
+      notify_channels: channels,
+      send_admin_report: true
+    });
+
+    if (r.skipped) {
+      toast('Une vérification est déjà en cours', 'warn');
+      return;
+    }
+
+    const msg = `Terminé : ${r.checked ?? 0} analysée(s), ${r.removed ?? 0} supprimée(s), ${r.new_in_period ?? 0} nouvelle(s) sur la période.`;
+    toast(msg, 'success');
+
+    if (statusEl) {
+      statusEl.textContent = `${msg} ${formatNotifyResults(r.notify_results)}`;
+    }
+
+    await loadReportsList(r.report_id || null);
+
+    if (r.report_id) {
+      await showReportPreview(r.report_id);
+    }
+  } catch (err) {
+    toast(err.message, 'error');
+    if (statusEl) statusEl.textContent = err.message;
+  }
 }
 
 /* ——— Presets catalogue ——— */
@@ -552,22 +761,33 @@ function renderPresetsList() {
     return;
   }
 
-  listEl.innerHTML = rows.map((p) => `
-    <div class="preset-row" data-preset-id="${escapeHtml(p.id)}">
+  listEl.innerHTML = rows.map((p) => {
+    const update = Boolean(p.update_available);
+    const rowClass = update ? 'preset-row preset-row--update' : 'preset-row';
+    const statusBadge = update
+      ? `<span class="badge badge-update" title="${escapeHtml(p.drift_summary || '')}">Mise à jour dispo</span>`
+      : (p.import_status === 'up_to_date'
+        ? '<span class="badge badge-ok">à jour</span>'
+        : (p.imported ? '<span class="badge badge-ok">importé</span>' : '<span class="badge badge-muted">non importé</span>'));
+
+    return `
+    <div class="${rowClass}" data-preset-id="${escapeHtml(p.id)}">
       <div class="preset-row-main">
         <strong>${escapeHtml(p.label)}</strong>
         <span class="badge badge-muted">${escapeHtml(p.distribution || '')}</span>
         <span class="badge badge-muted">${escapeHtml(p.architecture || '')}</span>
-        ${p.imported ? '<span class="badge badge-ok">importé</span>' : '<span class="badge badge-muted">non importé</span>'}
+        ${statusBadge}
         <span class="badge badge-muted">${escapeHtml(p.catalog_kind || 'catalogue')}</span>
-        <span class="hint">${p.source_count ?? 0} source(s)</span>
+        <span class="hint">${p.source_count ?? 0} source(s)${p.linked_iso_item_id ? ` · ISO #${p.linked_iso_item_id}` : ''}</span>
+        ${update ? `<span class="hint preset-drift-hint">${escapeHtml(p.drift_summary || '')}</span>` : ''}
       </div>
       <div class="btn-row">
-        <button type="button" class="btn btn-primary btn-sm" data-preset-import="${escapeHtml(p.id)}">Importer</button>
-        <button type="button" class="btn btn-secondary btn-sm" data-preset-sync="${escapeHtml(p.id)}">Mettre à jour</button>
+        <button type="button" class="btn btn-primary btn-sm" data-preset-import="${escapeHtml(p.id)}"${p.imported ? ' hidden' : ''}>Importer</button>
+        <button type="button" class="btn btn-secondary btn-sm${update ? ' btn-warn' : ''}" data-preset-sync="${escapeHtml(p.id)}"${p.imported ? '' : ' hidden'}>Mettre à jour (sync)</button>
         <button type="button" class="btn btn-secondary btn-sm" data-preset-scan="${escapeHtml(p.id)}">Importer + scan</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   listEl.querySelectorAll('[data-preset-import]').forEach((btn) => {
     btn.addEventListener('click', () => applyPresetAction(btn.dataset.presetImport, 'import'));
@@ -626,7 +846,7 @@ function bindPresetsEvents() {
 
 /* ——— ISO ——— */
 async function loadIsoTab() {
-  state.isoItems = await api('GET', '/iso-items');
+  state.isoItems = await api('GET', '/iso-items?include_catalog_drift=true');
   renderIsoList();
   await loadPresetsMeta();
   await loadPresetsList();
@@ -652,8 +872,11 @@ function renderIsoList() {
   list.innerHTML = items.map((iso) => {
     const id = iso.id;
     const open = state.expandedIsoId === id;
+    const catalogUpdate = Boolean(iso.catalog_update_available);
+    const cardClass = catalogUpdate ? 'iso-card iso-card--catalog-drift' : 'iso-card';
+
     return `
-      <div class="iso-card" data-iso-id="${id}">
+      <div class="${cardClass}" data-iso-id="${id}">
         <div class="iso-card-head" data-action="toggle-iso">
           <div>
             <strong>${escapeHtml(iso.name)}</strong>
@@ -664,6 +887,7 @@ function renderIsoList() {
               ${iso.enabled ? '<span class="badge badge-ok">on</span>' : '<span class="badge badge-muted">off</span>'}
               ${iso.is_public ? '<span class="badge badge-ok">public</span>' : ''}
               ${iso.catalog_source ? `<span class="badge badge-muted" title="Origine configuration">${escapeHtml(iso.catalog_source)}${iso.catalog_preset_id ? ' · ' + escapeHtml(iso.catalog_preset_id) : ''}</span>` : '<span class="badge badge-muted">manuel</span>'}
+              ${catalogUpdate ? `<span class="badge badge-update" title="${escapeHtml(iso.catalog_drift_summary || '')}">catalogue : MAJ dispo</span>` : ''}
             </div>
           </div>
           <span>${open ? '▼' : '▶'}</span>
@@ -1232,14 +1456,9 @@ function bindEvents() {
     }
   });
 
-  $('#btn-link-check')?.addEventListener('click', async () => {
-    try {
-      const r = await api('POST', '/admin/release-link-check', {});
-      toast(`Vérification OK — ${r.removed ?? 0} supprimée(s)`, 'success');
-    } catch (e) {
-      toast(e.message, 'error');
-    }
-  });
+  $('#link-check-form')?.addEventListener('submit', runLinkCheckFromForm);
+  $('#btn-reports-refresh')?.addEventListener('click', () => loadReportsList());
+  $('#btn-report-close')?.addEventListener('click', closeReportPreview);
 
   $('#scan-detail-close')?.addEventListener('click', () => {
     const card = $('#scan-detail-card');

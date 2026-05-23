@@ -49,6 +49,7 @@
         <button type="button" class="nav-item" data-tab="scans">Scans</button>
         <button type="button" class="nav-item" data-tab="storage">Stockage</button>
         <button type="button" class="nav-item" data-tab="notifications">Notifications</button>
+        <button type="button" class="nav-item" data-tab="reports">Rapports admin</button>
         <button type="button" class="nav-item" data-tab="users">Utilisateurs</button>
         <button type="button" class="nav-item" data-tab="system">Système</button>
       </nav>
@@ -175,7 +176,6 @@
             <h3>Scans</h3>
             <div class="toolbar">
               <button type="button" class="btn btn-primary" id="btn-scan-global">Lancer un scan complet</button>
-              <button type="button" class="btn btn-secondary" id="btn-link-check">Vérifier les liens</button>
             </div>
           </div>
           <div id="scans-table" class="table-scroll"></div>
@@ -221,6 +221,55 @@
             </div>
             <div id="deliveries-table" class="table-scroll"></div>
             <div id="deliveries-pagination" class="pagination-bar"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Rapports admin -->
+      <section class="tab-panel" data-panel="reports">
+        <div class="grid-2">
+          <article class="card">
+            <h3>Vérification des liens</h3>
+            <p class="hint">Lance le contrôle des URLs releases, supprime les liens morts et génère un rapport.</p>
+            <form id="link-check-form" class="form-grid">
+              <label class="field"><span>Fenêtre (heures)</span>
+                <input type="number" name="report_hours" value="24" min="1" max="168" required>
+              </label>
+              <fieldset class="field field-span" id="link-check-channels">
+                <legend>Diffusion du rapport</legend>
+                <label class="field-check"><input type="checkbox" name="ch_ui" value="ui" checked> Interface web</label>
+                <label class="field-check"><input type="checkbox" name="ch_email" value="email"> E-mail</label>
+                <label class="field-check"><input type="checkbox" name="ch_discord" value="discord"> Discord</label>
+                <label class="field-check"><input type="checkbox" name="ch_teams" value="teams"> Teams</label>
+                <label class="field-check"><input type="checkbox" name="ch_webhook" value="webhook"> Webhook</label>
+              </fieldset>
+              <div class="field-span form-actions">
+                <button type="submit" class="btn btn-primary">Lancer la vérification</button>
+              </div>
+            </form>
+            <p id="link-check-status" class="hint" hidden></p>
+          </article>
+          <article class="card">
+            <h3>Configuration des canaux</h3>
+            <pre id="admin-notify-config" class="code-block">—</pre>
+          </article>
+        </div>
+        <div class="grid-2">
+          <article class="card">
+            <div class="card-head">
+              <h3>Historique des rapports</h3>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-reports-refresh">Actualiser</button>
+            </div>
+            <div id="reports-list" class="table-scroll"></div>
+          </article>
+          <article class="card">
+            <div class="card-head">
+              <h3>Aperçu du rapport</h3>
+              <button type="button" class="btn btn-ghost btn-sm" id="btn-report-close" hidden>Fermer</button>
+            </div>
+            <div id="report-preview-meta" class="hint"></div>
+            <iframe id="report-preview-frame" class="report-preview-frame" title="Aperçu rapport" hidden sandbox=""></iframe>
+            <p id="report-preview-empty" class="iw-empty">Sélectionnez un rapport dans la liste.</p>
           </article>
         </div>
       </section>

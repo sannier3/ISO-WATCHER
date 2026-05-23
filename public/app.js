@@ -608,7 +608,10 @@ async function runLinkCheckAction() {
   });
 
   try {
-    const data = await api('POST', '/admin/release-link-check', { send_admin_report: false });
+    const data = await api('POST', '/admin/release-link-check', {
+      notify_channels: ['ui'],
+      send_admin_report: false
+    });
     const text = JSON.stringify(data, null, 2);
 
     setLastAction({

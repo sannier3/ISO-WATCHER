@@ -27,6 +27,7 @@ import {
 } from './lib/ui-cookie.js';
 import { createUiSessionStore, assertPrivateNetwork, getClientIp } from './lib/ui-session.js';
 import { createPresetsService } from './lib/presets.js';
+import { createAdminNotify } from './lib/admin-notify.js';
 
 /** Sous-dossiers à explorer quand discovery_regex est vide (exclut . et ..). */
 const DEFAULT_DISCOVERY_REGEX = '^[^./][^/]+/$';
@@ -67,6 +68,12 @@ const apiRateLimit = createApiRateLimiter({
   windowMs: config.security.apiRateLimitWindowMs
 });
 const presetsService = createPresetsService({ rootDir: __dirname, config, pool });
+const adminNotify = createAdminNotify({
+  config,
+  mailer,
+  log: app.log,
+  dataDir: path.join(__dirname, 'data')
+});
 
 function isAdminActor(request) {
   return request.actor?.type === 'admin';
@@ -525,9 +532,45 @@ function registerRoutes() {
         scheduler_enabled: config.schedulerEnabled,
         scheduler_cron: config.schedulerCron,
         link_check_enabled: config.linkCheck.enabled,
-        admin_email: config.admin.email
+        admin_email: config.admin.email,
+        admin_notify: adminNotify.getPublicConfig()
       }
     };
+  });
+
+  app.get('/api/v1/admin/notify-config', async (request, reply) => {
+    if (request.actor?.type !== 'admin') {
+      return reply.code(403).send({ error: 'admin_required' });
+    }
+
+    return adminNotify.getPublicConfig();
+  });
+
+  app.get('/api/v1/admin/reports', async (request, reply) => {
+    if (request.actor?.type !== 'admin') {
+      return reply.code(403).send({ error: 'admin_required' });
+    }
+
+    const limit = clamp(Number(request.query.limit || 20), 1, 50);
+    const type = request.query.type ? String(request.query.type) : undefined;
+
+    return {
+      reports: adminNotify.listReports({ limit, type })
+    };
+  });
+
+  app.get('/api/v1/admin/reports/:reportId', async (request, reply) => {
+    if (request.actor?.type !== 'admin') {
+      return reply.code(403).send({ error: 'admin_required' });
+    }
+
+    const report = adminNotify.getReport(request.params.reportId);
+
+    if (!report) {
+      return reply.code(404).send({ error: 'report_not_found' });
+    }
+
+    return report;
   });
 
   app.get('/api/v1/admin/users', async (request, reply) => {
@@ -608,7 +651,25 @@ function registerRoutes() {
     }
 
     try {
-      return presetsService.listPresets({ q: request.query.q, tag: request.query.tag });
+      return await presetsService.listPresets({ q: request.query.q, tag: request.query.tag });
+    } catch (err) {
+      return replyPresetError(reply, err);
+    }
+  });
+
+  app.get('/api/v1/presets/:presetId/drift', async (request, reply) => {
+    if (!isAdminActor(request)) {
+      return reply.code(403).send({ error: 'admin_required' });
+    }
+
+    try {
+      const drift = await presetsService.getPresetDrift(request.params.presetId);
+
+      if (!drift) {
+        return reply.code(404).send({ error: 'preset_not_found' });
+      }
+
+      return drift;
     } catch (err) {
       return replyPresetError(reply, err);
     }
@@ -715,6 +776,26 @@ function registerRoutes() {
 
     const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
     const [rows] = await pool.query(`SELECT * FROM iso_items ${where} ORDER BY distribution, name`, params);
+
+    if (request.actor?.type === 'admin' && parseBool(request.query.include_catalog_drift)) {
+      const enriched = [];
+
+      for (const row of rows) {
+        const item = { ...row };
+
+        if (row.catalog_preset_id) {
+          const drift = await presetsService.getDriftForIsoItem(row);
+          item.catalog_drift = drift;
+          item.catalog_update_available = Boolean(drift?.update_available);
+          item.catalog_drift_summary = drift?.summary || null;
+        }
+
+        enriched.push(item);
+      }
+
+      return enriched;
+    }
+
     return rows;
   });
 
@@ -1060,7 +1141,8 @@ function registerRoutes() {
     }
 
     const result = await runReleaseLinkValidation({
-      sendAdminReport: request.body?.send_admin_report !== false,
+      notifyChannels: Array.isArray(request.body?.notify_channels) ? request.body.notify_channels : undefined,
+      sendAdminReport: request.body?.send_admin_report,
       reportHours: clamp(Number(request.body?.report_hours || config.linkCheck.reportHours), 1, 168)
     });
 
@@ -2251,7 +2333,16 @@ async function processScanRun(scanRunId, options = {}) {
         logScan(scanRunId, 'info', 'scan', `Notification admin instantanée (${newReleaseIds.length} release(s))`);
 
         try {
-          await sendAdminInstantReleaseNotifications(newReleaseIds, { scanRunId });
+          const uniqueIds = [...new Set(newReleaseIds.map((id) => Number(id)).filter((id) => id > 0))];
+          const releaseRows = await getReleaseRowsByIds(uniqueIds);
+
+          if (releaseRows.length) {
+            await adminNotify.notifyNewReleases({
+              releases: releaseRows,
+              scanRunId,
+              channels: adminNotify.resolveChannels({ kind: 'instant' })
+            });
+          }
         } catch (error) {
           app.log.error(error, 'Échec notification admin instantanée');
           logScan(scanRunId, 'error', 'scan', `Échec notification admin : ${error.message}`);
@@ -3878,7 +3969,11 @@ async function verifyReleaseLink(release) {
   };
 }
 
-async function runReleaseLinkValidation({ sendAdminReport = true, reportHours = config.linkCheck.reportHours } = {}) {
+async function runReleaseLinkValidation({
+  notifyChannels,
+  sendAdminReport = true,
+  reportHours = config.linkCheck.reportHours
+} = {}) {
   if (releaseLinkCheckRunning) {
     return { skipped: true, reason: 'already_running' };
   }
@@ -3928,6 +4023,19 @@ async function runReleaseLinkValidation({ sendAdminReport = true, reportHours = 
     });
 
     const newReleases = await getReleasesDetectedSince(reportHours);
+    const removedPayload = removedReleases.map((row) => ({
+      id: row.id,
+      iso_name: row.iso_name,
+      filename: row.filename,
+      version: row.version,
+      url: row.url,
+      distribution: row.distribution,
+      file_size: row.file_size,
+      removal_reason: row.removal_reason,
+      reason: row.removal_reason,
+      http_status: row.http_status
+    }));
+
     const result = {
       skipped: false,
       checked: releases.length,
@@ -3936,26 +4044,37 @@ async function runReleaseLinkValidation({ sendAdminReport = true, reportHours = 
       new_in_period: newReleases.length,
       report_hours: reportHours,
       duration_ms: Date.now() - startedAt,
-      removed_releases: removedReleases.map((row) => ({
+      removed_releases: removedPayload,
+      new_releases: newReleases.map((row) => ({
         id: row.id,
         iso_name: row.iso_name,
         filename: row.filename,
         version: row.version,
         url: row.url,
-        reason: row.removal_reason,
-        http_status: row.http_status
+        distribution: row.distribution,
+        file_size: row.file_size,
+        detected_at: row.detected_at
       }))
     };
 
-    if (sendAdminReport && config.admin.email) {
+    const channels = adminNotify.resolveChannels({
+      notifyChannels,
+      sendAdminReport,
+      kind: 'link_check'
+    });
+
+    if (channels.length) {
       try {
-        await sendAdminDailyReport({
+        const notifyOut = await adminNotify.notifyLinkCheckReport({
           newReleases,
-          removedReleases,
-          stats: result
+          removedReleases: removedPayload,
+          stats: result,
+          channels
         });
+        result.report_id = notifyOut.reportId;
+        result.notify_results = notifyOut.results;
       } catch (error) {
-        app.log.error(error, 'Échec envoi du rapport admin ISO Watcher');
+        app.log.error(error, 'Échec notification / rapport admin');
         result.admin_report_error = String(error.message || error);
       }
     }
@@ -3964,157 +4083,6 @@ async function runReleaseLinkValidation({ sendAdminReport = true, reportHours = 
   } finally {
     releaseLinkCheckRunning = false;
   }
-}
-
-async function sendAdminInstantReleaseNotifications(releaseIds, { scanRunId = null } = {}) {
-  const to = config.admin.email;
-
-  if (!to || !config.admin.instantNotify || !releaseIds.length) {
-    return;
-  }
-
-  const uniqueIds = [...new Set(releaseIds.map((id) => Number(id)).filter((id) => id > 0))];
-  const releases = await getReleaseRowsByIds(uniqueIds);
-
-  if (!releases.length) {
-    return;
-  }
-
-  const subject = releases.length === 1
-    ? `[ISO Watcher] Nouvelle ISO : ${releases[0].iso_name || releases[0].filename}`
-    : `[ISO Watcher] ${releases.length} nouvelles ISO détectées`;
-  const html = buildEmailHtml(releases, { notifyMode: 'immediate', isTest: false });
-
-  await mailer.sendMail({
-    from: `"${config.smtp.fromName}" <${config.smtp.fromAddress}>`,
-    to,
-    subject,
-    html
-  });
-
-  app.log.info({
-    to,
-    release_count: releases.length,
-    scan_run_id: scanRunId,
-    release_ids: uniqueIds
-  }, 'Notification admin instantanée envoyée');
-}
-
-async function sendAdminDailyReport({ newReleases, removedReleases, stats }) {
-  const to = config.admin.email;
-
-  if (!to) {
-    app.log.warn('ADMIN_EMAIL non configuré — rapport admin non envoyé');
-    return;
-  }
-
-  const dateLabel = new Date().toLocaleDateString('fr-FR', {
-    timeZone: 'Europe/Paris',
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-  const subject = `[ISO Watcher] Rapport quotidien 24h — ${dateLabel}`;
-  const html = buildAdminReportHtml({ newReleases, removedReleases, stats });
-
-  await mailer.sendMail({
-    from: `"${config.smtp.fromName}" <${config.smtp.fromAddress}>`,
-    to,
-    subject,
-    html
-  });
-
-  app.log.info({
-    to,
-    new_releases: newReleases.length,
-    removed_releases: removedReleases.length
-  }, 'Rapport admin ISO Watcher envoyé');
-}
-
-function buildAdminReportHtml({ newReleases, removedReleases, stats }) {
-  const periodLabel = `${stats.report_hours} dernières heures`;
-
-  const newRows = newReleases.length
-    ? newReleases.map((release) => adminReportTableRow(release, { showReason: false })).join('')
-    : `<tr><td colspan="7"><em>Aucune nouvelle release détectée sur ${escapeHtml(periodLabel)}.</em></td></tr>`;
-
-  const removedRows = removedReleases.length
-    ? removedReleases.map((release) => adminReportTableRow(release, {
-      showReason: true,
-      reason: release.removal_reason,
-      httpStatus: release.http_status
-    })).join('')
-    : '<tr><td colspan="7"><em>Aucune release retirée lors de la vérification des liens.</em></td></tr>';
-
-  return `<!doctype html>
-<html lang="fr">
-<head><meta charset="utf-8"><title>Rapport admin ISO Watcher</title></head>
-<body style="font-family: Arial, sans-serif; color: #111827; line-height: 1.45;">
-  <h2>Rapport quotidien administrateur (24 h)</h2>
-  <p>Synthèse des <strong>${escapeHtml(periodLabel)}</strong> et des liens invalides retirés lors du contrôle quotidien.</p>
-  <ul>
-    <li>Releases vérifiées : <strong>${stats.checked}</strong></li>
-    <li>Liens valides : <strong>${stats.valid}</strong></li>
-    <li>Releases retirées (lien mort) : <strong>${stats.removed}</strong></li>
-    <li>Nouvelles releases sur la période : <strong>${stats.new_in_period}</strong></li>
-  </ul>
-
-  <h3>Nouvelles releases détectées</h3>
-  <table border="1" cellspacing="0" cellpadding="8" style="border-collapse: collapse; width: 100%; margin-bottom: 24px;">
-    <thead>
-      <tr>
-        <th align="left">Distribution</th>
-        <th align="left">ISO</th>
-        <th align="left">Version</th>
-        <th align="left">Fichier</th>
-        <th align="left">Taille</th>
-        <th align="left">Détectée</th>
-        <th align="left">Lien</th>
-      </tr>
-    </thead>
-    <tbody>${newRows}</tbody>
-  </table>
-
-  <h3>Releases retirées (lien invalide)</h3>
-  <table border="1" cellspacing="0" cellpadding="8" style="border-collapse: collapse; width: 100%;">
-    <thead>
-      <tr>
-        <th align="left">Distribution</th>
-        <th align="left">ISO</th>
-        <th align="left">Version</th>
-        <th align="left">Fichier</th>
-        <th align="left">Taille</th>
-        <th align="left">Motif</th>
-        <th align="left">Ancien lien</th>
-      </tr>
-    </thead>
-    <tbody>${removedRows}</tbody>
-  </table>
-</body>
-</html>`;
-}
-
-function adminReportTableRow(release, { showReason = false, reason = '', httpStatus = null } = {}) {
-  const detectedLabel = release.detected_at
-    ? new Date(release.detected_at).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })
-    : '—';
-  const reasonCell = showReason
-    ? escapeHtml([reason, httpStatus ? `HTTP ${httpStatus}` : ''].filter(Boolean).join(' · '))
-    : escapeHtml(detectedLabel);
-  const lastCell = showReason
-    ? escapeHtml(release.url || '')
-    : `<a href="${escapeHtml(release.url || '#')}">Télécharger</a>`;
-
-  return `<tr>
-    <td>${escapeHtml(release.distribution || '')}</td>
-    <td>${escapeHtml(release.iso_name || release.filename || '')}</td>
-    <td>${escapeHtml(release.version || '')}</td>
-    <td>${escapeHtml(release.filename || '')}</td>
-    <td>${escapeHtml(formatFileSize(release.file_size))}</td>
-    <td>${reasonCell}</td>
-    <td>${lastCell}</td>
-  </tr>`;
 }
 
 function parseContentLengthHeader(headers) {
