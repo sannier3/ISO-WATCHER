@@ -1,11 +1,13 @@
-# Développement local : construire l'image au lieu de la tirer du registry.
+# Surcharge : build local au lieu de ghcr.io/sannier3/iso-watcher:latest
+# https://github.com/sannier3/ISO-WATCHER
 #
 #   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
-#
-# Ou MySQL :
 #   docker compose -f docker-compose.mysql.yml -f docker-compose.build.yml up -d --build
 
 services:
   iso-watcher:
-    build: .
-    image: iso-watcher:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/sannier3/iso-watcher:local
+    pull_policy: never

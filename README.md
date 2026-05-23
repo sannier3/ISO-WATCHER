@@ -61,43 +61,43 @@ Fichier obligatoire avant tout démarrage : **`.env`** (copié depuis [`.env.exa
 | Conteneur + MySQL | `docker-compose.mysql.yml` |
 | Mise à jour prod Docker | `docker compose pull && docker compose up -d` |
 
-> Remplacez `JBSAN/iso-watcher` par votre dépôt GitHub si le slug diffère (`ISO_WATCHER_REPO`).
-
 ## Installation rapide (script)
+
+Dépôt : [github.com/sannier3/ISO-WATCHER](https://github.com/sannier3/ISO-WATCHER) — script : [`scripts/install.sh`](https://github.com/sannier3/ISO-WATCHER/blob/main/scripts/install.sh)
 
 Script cible **Debian / Ubuntu** : installe Node 20, clone le dépôt dans `/opt/iso-watcher`, crée `.env`, installe les dépendances npm et l’unité systemd `iso-watcher`.
 
 **LXC / conteneur (souvent déjà root, sans `sudo`) :**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/JBSAN/iso-watcher/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/sannier3/ISO-WATCHER/main/scripts/install.sh | bash
 ```
 
 **Machine classique avec `sudo` :**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/JBSAN/iso-watcher/main/scripts/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/sannier3/ISO-WATCHER/main/scripts/install.sh | sudo bash
 ```
 
 **Avec MariaDB** (paquet `mariadb-server`, base + utilisateur, `DB_DRIVER=mysql` dans `.env`) :
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/JBSAN/iso-watcher/main/scripts/install.sh | bash -s -- --mysql
+curl -fsSL https://raw.githubusercontent.com/sannier3/ISO-WATCHER/main/scripts/install.sh | bash -s -- --mysql
 ```
 
 **Options utiles :**
 
 ```bash
-bash scripts/install.sh --help          # aide complète
+bash scripts/install.sh --help
 bash scripts/install.sh --dir /opt/iso-watcher --no-start
-bash scripts/install.sh --repo auteur/iso-watcher --branch main
+bash scripts/install.sh --repo sannier3/ISO-WATCHER --branch main
 ```
 
 **Désinstallation :**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/JBSAN/iso-watcher/main/scripts/install.sh | bash -s -- --uninstall
-curl -fsSL https://raw.githubusercontent.com/JBSAN/iso-watcher/main/scripts/install.sh | bash -s -- --uninstall --purge
+curl -fsSL https://raw.githubusercontent.com/sannier3/ISO-WATCHER/main/scripts/install.sh | bash -s -- --uninstall
+curl -fsSL https://raw.githubusercontent.com/sannier3/ISO-WATCHER/main/scripts/install.sh | bash -s -- --uninstall --purge
 ```
 
 Variables d’environnement pour le script : `ISO_WATCHER_REPO`, `ISO_WATCHER_BRANCH`, `ISO_WATCHER_INSTALL_DIR`, `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`.
@@ -107,8 +107,8 @@ Le service systemd ajoute automatiquement `ReadWritePaths` pour `STORAGE_ROOT` o
 ## Développement local
 
 ```bash
-git clone https://github.com/JBSAN/iso-watcher.git
-cd iso-watcher
+git clone https://github.com/sannier3/ISO-WATCHER.git
+cd ISO-WATCHER
 cp .env.example .env
 # Éditez INTRANET_SHARED_TOKEN (obligatoire)
 
@@ -124,7 +124,7 @@ npm start
 ```bash
 cp .env.example .env
 # INTRANET_SHARED_TOKEN obligatoire
-# Image par défaut : ghcr.io/jbsan/iso-watcher:latest (voir ISO_WATCHER_IMAGE)
+# Image par défaut : ghcr.io/sannier3/iso-watcher:latest (voir ISO_WATCHER_IMAGE)
 ```
 
 **SQLite** (image du registry, sans build local) :
@@ -161,9 +161,9 @@ flowchart LR
   C --> D[Serveur: compose pull + up -d]
 ```
 
-1. **CI** : le workflow [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) construit et pousse l’image sur **GitHub Container Registry** :
-   - push sur `main` → tag `latest`
-   - tag git `v0.2.1` → tags `0.2.1`, `0.2`, etc.
+1. **CI** : le workflow [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) pousse sur **ghcr.io/sannier3/iso-watcher** :
+   - push sur `main` → **`latest`** (à utiliser en prod)
+   - tag git `v0.2.1` → `0.2.1`, `0.2` (pas de tag `sha-*` publié)
 
 2. **Activer les packages** (une fois sur GitHub) : *Settings → Actions → General* → autoriser les workflows à écrire les packages. L’image sera visible sous *Packages* du dépôt.
 
@@ -172,16 +172,22 @@ flowchart LR
    echo "$GITHUB_TOKEN" | docker login ghcr.io -u VOTRE_USER --password-stdin
    ```
 
-4. **Mettre à jour le serveur** (sans rebuild, sans `git pull` du code si vous n’avez que compose + `.env`) :
+4. **Mettre à jour le serveur** :
    ```bash
+   docker pull ghcr.io/sannier3/iso-watcher:latest
    docker compose pull
    docker compose up -d --remove-orphans
    ```
-   Ou : `./scripts/docker-update.sh`
+   Ou : `./scripts/docker-update.sh`  
+   Ne pas utiliser les anciens tags `sha-…` : préférez **`:latest`** ou une version **`0.2.0`** après tag git.
 
-5. **Épingler une version** dans `.env` (évite les surprises de `:latest`) :
+5. **Épingler une version** (optionnel, après `git tag v0.2.0 && git push origin v0.2.0`) :
    ```env
-   ISO_WATCHER_IMAGE=ghcr.io/jbsan/iso-watcher:0.2.0
+   ISO_WATCHER_IMAGE=ghcr.io/sannier3/iso-watcher:0.2.0
+   ```
+   Par défaut (recommandé pour suivre `main`) :
+   ```env
+   ISO_WATCHER_IMAGE=ghcr.io/sannier3/iso-watcher:latest
    ```
 
 Santé : `curl -s http://127.0.0.1:3088/health`

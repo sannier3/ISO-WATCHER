@@ -1,5 +1,22 @@
-# ISO Watcher avec MySQL
-# Prérequis : cp .env.example .env — INTRANET_SHARED_TOKEN + DB_DRIVER=mysql (ou variables ci-dessous)
+# ISO Watcher — MySQL / MariaDB (image GHCR + conteneur mysql:8.4)
+# Dépôt : https://github.com/sannier3/ISO-WATCHER
+#
+# Prérequis :
+#   cp .env.example .env
+#   INTRANET_SHARED_TOKEN obligatoire
+#   DB_DRIVER=mysql dans .env (ou laissé surchargé ci-dessous)
+#   MYSQL_* alignés avec ce compose
+#   ISO_WATCHER_IMAGE=ghcr.io/sannier3/iso-watcher:latest
+#
+# Démarrage :
+#   docker compose -f docker-compose.mysql.yml pull
+#   docker compose -f docker-compose.mysql.yml up -d
+#
+# Build local (dev) :
+#   docker compose -f docker-compose.mysql.yml -f docker-compose.build.yml up -d --build
+
+name: iso-watcher
+
 services:
   mysql:
     image: mysql:8.4
@@ -19,7 +36,7 @@ services:
       retries: 10
 
   iso-watcher:
-    image: ${ISO_WATCHER_IMAGE:-ghcr.io/jbsan/iso-watcher:latest}
+    image: ${ISO_WATCHER_IMAGE:-ghcr.io/sannier3/iso-watcher:latest}
     pull_policy: always
     container_name: iso-watcher
     restart: unless-stopped

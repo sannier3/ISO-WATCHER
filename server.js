@@ -21,6 +21,12 @@ import { createUiSessionStore, assertPrivateNetwork } from './lib/ui-session.js'
 /** Sous-dossiers à explorer quand discovery_regex est vide (exclut . et ..). */
 const DEFAULT_DISCOVERY_REGEX = '^[^./][^/]+/$';
 
+const SCAN_STARTUP_INTERRUPT_REASON =
+  'Scan interrompu au redémarrage du service (processus précédent terminé).';
+
+const SCAN_LOG_LEVELS = new Set(['debug', 'info', 'warn', 'error']);
+const SCAN_LOG_LEVEL_RANK = { debug: 10, info: 20, warn: 30, error: 40 };
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const config = loadConfig();
 
@@ -37,7 +43,6 @@ const app = Fastify({
 });
 
 const { pool, driver: dbDriver } = await createDatabase(config, app.log);
-const startupScanRecovery = await recoverOrphanedScansOnStartup();
 const storage = createFileStorage(config, pool, app.log);
 const uiSessions = createUiSessionStore(config.intranetToken);
 const mailer = nodemailer.createTransport(buildSmtpTransportOptions());
@@ -233,6 +238,7 @@ app.log.info({
   smtp_require_tls: config.smtp.requireTls
 }, 'Configuration SMTP');
 
+const startupScanRecovery = await recoverOrphanedScansOnStartup();
 if (startupScanRecovery.recovered > 0) {
   app.log.warn(startupScanRecovery, 'Scans orphelins marqués interrompus au démarrage');
 }
@@ -1423,9 +1429,6 @@ async function setDestinationEnabled(id, enabled) {
   return getDestination(id);
 }
 
-const SCAN_LOG_LEVELS = new Set(['debug', 'info', 'warn', 'error']);
-const SCAN_LOG_LEVEL_RANK = { debug: 10, info: 20, warn: 30, error: 40 };
-
 function scanLogLevelRank(level) {
   return SCAN_LOG_LEVEL_RANK[level] ?? 20;
 }
@@ -1651,9 +1654,6 @@ async function incrementScanProgress(scanRunId) {
   );
 }
 
-const SCAN_STARTUP_INTERRUPT_REASON =
-  'Scan interrompu au redémarrage du service (processus précédent terminé).';
-
 async function recoverOrphanedScansOnStartup() {
   const mode = config.scanStartupRecovery;
 
@@ -1715,11 +1715,15 @@ async function recoverOrphanedScansOnStartup() {
       ]
     );
 
-    await appendScanLog(scanRunId, 'warn', 'scan', SCAN_STARTUP_INTERRUPT_REASON, {
-      recovery: 'startup',
-      completed_sources: completedSources,
-      total_sources: Number(scan.total_sources || 0)
-    });
+    try {
+      await appendScanLog(scanRunId, 'warn', 'scan', SCAN_STARTUP_INTERRUPT_REASON, {
+        recovery: 'startup',
+        completed_sources: completedSources,
+        total_sources: Number(scan.total_sources || 0)
+      });
+    } catch (logError) {
+      app.log.warn({ err: logError, scan_run_id: scanRunId }, 'Log scan recovery non écrit');
+    }
 
     recoveredIds.push(scanRunId);
   }

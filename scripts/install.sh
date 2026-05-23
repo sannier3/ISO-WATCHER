@@ -2,13 +2,13 @@
 # ISO Watcher — installation / désinstallation (Debian / Ubuntu, systemd)
 #
 # Debian / Ubuntu — root direct (LXC, conteneur) :
-#   curl -fsSL https://raw.githubusercontent.com/JBSAN/iso-watcher/main/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/sannier3/ISO-WATCHER/main/scripts/install.sh | bash
 #
 # Avec élévation sudo si nécessaire :
-#   curl -fsSL …/scripts/install.sh | sudo bash
+#   curl -fsSL https://raw.githubusercontent.com/sannier3/ISO-WATCHER/main/scripts/install.sh | sudo bash
 #
 # Avec MariaDB (paquet mariadb-server + base + utilisateur) :
-#   curl -fsSL …/scripts/install.sh | bash -s -- --mysql
+#   curl -fsSL https://raw.githubusercontent.com/sannier3/ISO-WATCHER/main/scripts/install.sh | bash -s -- --mysql
 #
 # Variables : ISO_WATCHER_REPO, ISO_WATCHER_BRANCH, ISO_WATCHER_INSTALL_DIR
 # Options : --dir --branch --repo --mysql --no-start --uninstall --purge -h
@@ -16,7 +16,7 @@
 set -euo pipefail
 
 SERVICE_NAME="iso-watcher"
-DEFAULT_REPO="JBSAN/iso-watcher"
+DEFAULT_REPO="sannier3/ISO-WATCHER"
 DEFAULT_BRANCH="main"
 DEFAULT_INSTALL_DIR="/opt/iso-watcher"
 DEFAULT_MYSQL_DB="iso_watcher"
@@ -59,7 +59,7 @@ ensure_privileges() {
       log "Élévation des privilèges via sudo…"
       exec sudo -E bash "$script" "$@"
     fi
-    err "Root requis. Relancez avec : curl -fsSL …/install.sh | sudo bash"
+    err "Root requis. Relancez avec : curl -fsSL https://raw.githubusercontent.com/sannier3/ISO-WATCHER/main/scripts/install.sh | sudo bash"
   fi
 
   err "Root requis (uid 0). Pas de sudo détecté — en LXC/conteneur, connectez-vous en root et lancez : bash … (sans sudo)."

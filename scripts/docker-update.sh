@@ -33,7 +33,7 @@ fi
 
 # shellcheck disable=SC1091
 source .env 2>/dev/null || true
-IMAGE="${ISO_WATCHER_IMAGE:-ghcr.io/jbsan/iso-watcher:latest}"
+IMAGE="${ISO_WATCHER_IMAGE:-ghcr.io/sannier3/iso-watcher:latest}"
 
 echo "==> Image cible : ${IMAGE}"
 echo "==> docker compose pull"

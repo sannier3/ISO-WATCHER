@@ -1,8 +1,20 @@
-# Build et publication de l'image Docker sur GitHub Container Registry (ghcr.io).
-# Chaque push sur main → tag :latest
-# Chaque tag v*     → tag de version (ex. v0.2.0 → 0.2.0)
+# =============================================================================
+# Publication Docker → ghcr.io/sannier3/iso-watcher
+# =============================================================================
 #
-# Sur le serveur : docker compose pull && docker compose up -d
+# Déclencheurs :
+#   - push sur main        → tag :latest
+#   - push tag v* (v0.2.0) → tags 0.2.0, 0.2
+#   - pull_request main    → build seulement (pas de push)
+#
+# Sur le serveur après push main :
+#   docker compose pull && docker compose up -d
+#
+# Node.js sur les runners GitHub Actions :
+#   Les actions JS (checkout, build-push, etc.) passent de Node 20 à Node 24.
+#   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true évite les soucis avant juin 2026.
+#   L'image Docker de l'app reste Node 20 (Dockerfile node:20-bookworm-slim).
+# =============================================================================
 
 name: Docker
 
@@ -13,12 +25,19 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   packages: write
 
 env:
   REGISTRY: ghcr.io
+  IMAGE: ghcr.io/sannier3/iso-watcher
+  # Migration Actions Node 20 → 24 (https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/)
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
@@ -41,16 +60,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Métadonnées image
+      - name: Métadonnées image (tags)
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}
+          images: ${{ env.IMAGE }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix=sha-
 
       - name: Build et push
         uses: docker/build-push-action@v6
@@ -61,3 +79,14 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Résumé
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "## Image publiée" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "${{ steps.meta.outputs.tags }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Sur le serveur : \`docker compose pull && docker compose up -d\`" >> "$GITHUB_STEP_SUMMARY"
