@@ -16,7 +16,16 @@ import { URL } from 'node:url';
 import { APP_VERSION, loadConfig, parseBool, clamp } from './lib/config.js';
 import { createDatabase } from './lib/database.js';
 import { createFileStorage } from './lib/storage.js';
-import { createUiSessionStore, assertPrivateNetwork } from './lib/ui-session.js';
+import cookie from '@fastify/cookie';
+import { createApiRateLimiter } from './lib/api-rate-limit.js';
+import { createLoginGuard, sendRateLimited } from './lib/login-guard.js';
+import { buildHelmetOptions, timingSafeEqualString } from './lib/security-utils.js';
+import {
+  clearUiSessionCookie,
+  resolveUiSessionToken,
+  setUiSessionCookie
+} from './lib/ui-cookie.js';
+import { createUiSessionStore, assertPrivateNetwork, getClientIp } from './lib/ui-session.js';
 
 /** Sous-dossiers à explorer quand discovery_regex est vide (exclut . et ..). */
 const DEFAULT_DISCOVERY_REGEX = '^[^./][^/]+/$';
@@ -39,24 +48,52 @@ if (!config.intranetToken) {
 
 const app = Fastify({
   logger: true,
-  bodyLimit: 1024 * 1024 * 2
+  bodyLimit: 1024 * 1024 * 2,
+  trustProxy: config.security.trustProxy
 });
 
 const { pool, driver: dbDriver } = await createDatabase(config, app.log);
 const storage = createFileStorage(config, pool, app.log);
 const uiSessions = createUiSessionStore(config.intranetToken);
 const mailer = nodemailer.createTransport(buildSmtpTransportOptions());
+const loginGuard = createLoginGuard({
+  maxAttempts: config.security.loginMaxAttempts,
+  windowMs: config.security.loginWindowMs,
+  lockoutMs: config.security.loginLockoutMs
+});
+const apiRateLimit = createApiRateLimiter({
+  max: config.security.apiRateLimitMax,
+  windowMs: config.security.apiRateLimitWindowMs
+});
 
-await app.register(helmet, { contentSecurityPolicy: false });
+await app.register(cookie);
+await app.register(helmet, buildHelmetOptions(config.security));
 
 const corsOrigins = config.corsOrigin.split(',').map((item) => item.trim()).filter(Boolean);
+const corsWildcard = corsOrigins.includes('*');
 
 if (corsOrigins.length) {
   await app.register(cors, {
-    origin: corsOrigins.includes('*') ? true : corsOrigins,
+    origin: corsWildcard ? true : corsOrigins,
+    credentials: !corsWildcard,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'X-Intranet-Token', 'X-UI-Session', 'X-Actor-Username', 'X-Actor-Type', 'X-Public-Email']
   });
+}
+
+function loginGuardKey(request, scope) {
+  return `${scope}:${getClientIp(request)}`;
+}
+
+function issueUiSession(reply, actor) {
+  const token = uiSessions.issue(actor);
+  setUiSessionCookie(reply, token, config.security);
+
+  return {
+    ok: true,
+    ui_session: token,
+    actor
+  };
 }
 
 function isPublicPath(urlPath) {
@@ -71,8 +108,10 @@ function isPublicPath(urlPath) {
   if (
     urlPath === '/api/v1/admin/ui-config'
     || urlPath === '/api/v1/admin/ui-login'
+    || urlPath === '/api/v1/admin/ui-logout'
     || urlPath === '/api/v1/public/ui-config'
     || urlPath === '/api/v1/public/ui-session'
+    || urlPath === '/api/v1/public/ui-logout'
   ) {
     return true;
   }
@@ -82,6 +121,19 @@ function isPublicPath(urlPath) {
 
 app.addHook('preHandler', async (request, reply) => {
   const urlPath = request.url.split('?')[0];
+
+  if (urlPath.startsWith('/api/v1')) {
+    const apiLimit = apiRateLimit(`api:${getClientIp(request)}`);
+
+    if (!apiLimit.allowed) {
+      reply.header('Retry-After', String(apiLimit.retryAfterSec));
+      return reply.code(429).send({
+        error: 'rate_limit_exceeded',
+        message: 'Trop de requêtes API. Réessayez plus tard.',
+        retry_after_seconds: apiLimit.retryAfterSec
+      });
+    }
+  }
 
   if (isPublicPath(urlPath)) {
     return;
@@ -96,10 +148,10 @@ app.addHook('preHandler', async (request, reply) => {
     }
   }
 
-  const uiSessionRaw = request.headers['x-ui-session'];
+  const uiSessionRaw = resolveUiSessionToken(request);
 
   if (uiSessionRaw) {
-    const actor = uiSessions.verify(String(uiSessionRaw));
+    const actor = uiSessions.verify(uiSessionRaw);
 
     if (!actor) {
       return reply.code(401).send({ error: 'invalid_ui_session' });
@@ -112,7 +164,7 @@ app.addHook('preHandler', async (request, reply) => {
 
   const token = request.headers['x-intranet-token'];
 
-  if (token !== config.intranetToken) {
+  if (!token || !timingSafeEqualString(token, config.intranetToken)) {
     return reply.code(401).send({ error: 'unauthorized' });
   }
 
@@ -340,13 +392,22 @@ function registerRoutes() {
       return;
     }
 
-    const actor = { username: 'operator', type: 'internal' };
+    const guardKey = loginGuardKey(request, 'public-session');
+    const guard = loginGuard.check(guardKey);
 
-    return {
-      ok: true,
-      ui_session: uiSessions.issue(actor),
-      actor
-    };
+    if (!guard.allowed) {
+      return sendRateLimited(reply, guard.retryAfterSec);
+    }
+
+    const actor = { username: 'operator', type: 'internal' };
+    loginGuard.recordSuccess(guardKey);
+
+    return issueUiSession(reply, actor);
+  });
+
+  app.post('/api/v1/public/ui-logout', async (_request, reply) => {
+    clearUiSessionCookie(reply, config.security);
+    return { ok: true };
   });
 
   app.get('/api/v1/admin/ui-config', async () => ({
@@ -368,23 +429,33 @@ function registerRoutes() {
       return;
     }
 
+    const guardKey = loginGuardKey(request, 'admin-login');
+    const guard = loginGuard.check(guardKey);
+
+    if (!guard.allowed) {
+      return sendRateLimited(reply, guard.retryAfterSec);
+    }
+
     const password = String(request.body?.password || '');
 
     if (config.adminUi.authRequired) {
       const expected = config.adminUi.password || config.intranetToken;
 
-      if (!expected || password !== expected) {
+      if (!expected || !timingSafeEqualString(password, expected)) {
+        loginGuard.recordFailure(guardKey);
         return reply.code(401).send({ error: 'invalid_credentials' });
       }
     }
 
+    loginGuard.recordSuccess(guardKey);
     const actor = { username: 'admin', type: 'admin' };
 
-    return {
-      ok: true,
-      ui_session: uiSessions.issue(actor),
-      actor
-    };
+    return issueUiSession(reply, actor);
+  });
+
+  app.post('/api/v1/admin/ui-logout', async (_request, reply) => {
+    clearUiSessionCookie(reply, config.security);
+    return { ok: true };
   });
 
   app.get('/api/v1/admin/overview', async (request, reply) => {

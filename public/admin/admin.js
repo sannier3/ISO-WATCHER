@@ -43,8 +43,11 @@ function escapeHtml(s) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
+
+const FETCH_CREDENTIALS = { credentials: 'include' };
 
 function formatBytes(n) {
   const v = Number(n);
@@ -255,8 +258,9 @@ function loadSession() {
 }
 
 function saveSession(session) {
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  state.session = session;
+  const safe = { actor: session?.actor || { username: 'admin', type: 'admin' } };
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(safe));
+  state.session = safe;
 }
 
 function clearSession() {
@@ -266,20 +270,12 @@ function clearSession() {
 
 function apiHeaders() {
   const s = state.session;
-  const h = {
+  return {
     Accept: 'application/json',
     'Content-Type': 'application/json',
     'X-Actor-Username': s?.actor?.username || 'admin',
     'X-Actor-Type': s?.actor?.type || 'admin'
   };
-
-  if (s?.ui_session) {
-    h['X-UI-Session'] = s.ui_session;
-  } else if (s?.token) {
-    h['X-Intranet-Token'] = s.token;
-  }
-
-  return h;
 }
 
 function showAuthLoading() {
@@ -297,7 +293,7 @@ function showLoginScreen() {
 }
 
 async function api(method, path, body = null) {
-  const opts = { method, headers: apiHeaders() };
+  const opts = { method, headers: apiHeaders(), ...FETCH_CREDENTIALS };
   if (body !== null) {
     opts.body = JSON.stringify(body);
   }
@@ -329,18 +325,29 @@ function extractApiError(data, status) {
     return message;
   }
 
+  if (code === 'too_many_attempts' || code === 'rate_limit_exceeded') {
+    return 'Trop de tentatives. Réessayez plus tard.';
+  }
+
   return code || message || `HTTP ${status}`;
 }
 
 async function apiPublic(method, path, body = null) {
   const opts = {
     method: method || 'GET',
-    headers: { Accept: 'application/json', 'Content-Type': 'application/json' }
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    ...FETCH_CREDENTIALS
   };
   if (body !== null) opts.body = JSON.stringify(body);
   const res = await fetch(`/api/v1${path}`, opts);
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.error || data?.message || `HTTP ${res.status}`);
+  if (!res.ok) {
+    const code = data?.error || '';
+    if (code === 'too_many_attempts') {
+      throw new Error('too_many_attempts');
+    }
+    throw new Error(code || data?.message || `HTTP ${res.status}`);
+  }
   return data;
 }
 
@@ -356,18 +363,18 @@ async function initAuth() {
   }
 
   const saved = loadSession();
-
-  if (saved?.ui_session || saved?.token) {
+  if (saved?.actor) {
     state.session = saved;
-    showAuthLoading();
+  }
 
-    try {
-      await api('GET', '/admin/overview');
-      showApp();
-      return;
-    } catch {
-      clearSession();
-    }
+  showAuthLoading();
+
+  try {
+    await api('GET', '/admin/overview');
+    showApp();
+    return;
+  } catch {
+    clearSession();
   }
 
   const pwWrap = $('#login-password-wrap');
@@ -392,13 +399,26 @@ async function doLogin(password) {
 
   try {
     const res = await apiPublic('POST', '/admin/ui-login', { password });
-    saveSession({ ui_session: res.ui_session, actor: res.actor });
+    saveSession({ actor: res.actor });
     showApp();
   } catch (e) {
     showLoginScreen();
-    errEl.textContent = e.message || 'Connexion refusée';
+    const msg = e.message === 'too_many_attempts'
+      ? 'Trop de tentatives. Réessayez plus tard.'
+      : (e.message || 'Connexion refusée');
+    errEl.textContent = msg;
     errEl.hidden = false;
   }
+}
+
+async function doLogout() {
+  try {
+    await apiPublic('POST', '/admin/ui-logout', {});
+  } catch {
+    /* ignore */
+  }
+  clearSession();
+  showLoginScreen();
 }
 
 function showApp() {
@@ -1032,9 +1052,8 @@ function bindEvents() {
     await doLogin($('#login-password')?.value || '');
   });
 
-  $('#btn-logout')?.addEventListener('click', () => {
-    clearSession();
-    location.reload();
+  $('#btn-logout')?.addEventListener('click', async () => {
+    await doLogout();
   });
 
   $('#btn-refresh')?.addEventListener('click', () => refreshAll());

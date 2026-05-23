@@ -23,8 +23,11 @@ function escapeHtml(s) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
+
+const FETCH_CREDENTIALS = { credentials: 'include' };
 
 function toast(msg, type = 'info') {
   const host = $('toast-host');
@@ -54,30 +57,29 @@ function loadSession() {
 }
 
 function saveSession(session) {
-  saveJson(SESSION_KEY, session);
-  state.session = session;
+  const safe = { actor: session?.actor || { username: 'operator', type: 'internal' } };
+  saveJson(SESSION_KEY, safe);
+  state.session = safe;
 }
 
 function apiHeaders() {
   const s = state.session;
-  const h = { Accept: 'application/json', 'Content-Type': 'application/json' };
+  const h = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    'X-Actor-Username': s?.actor?.username || 'operator',
+    'X-Actor-Type': s?.actor?.type || 'internal'
+  };
 
-  if (s?.ui_session) {
-    h['X-UI-Session'] = s.ui_session;
-  } else if (s?.token) {
+  if (s?.token) {
     h['X-Intranet-Token'] = s.token;
-  }
-
-  if (s?.actor) {
-    h['X-Actor-Username'] = s.actor.username || 'operator';
-    h['X-Actor-Type'] = s.actor.type || 'internal';
   }
 
   return h;
 }
 
 async function api(method, path, body = null) {
-  const opts = { method, headers: apiHeaders() };
+  const opts = { method, headers: apiHeaders(), ...FETCH_CREDENTIALS };
   if (body !== null) opts.body = JSON.stringify(body);
   const res = await fetch(`/api/v1${path}`, opts);
   const text = await res.text();
@@ -226,26 +228,32 @@ async function pollLastAction() {
 }
 
 async function ensureSession() {
-  if (state.session?.ui_session || state.session?.token) return true;
+  if (state.session?.actor || state.session?.token) {
+    return true;
+  }
 
   if (state.config?.public_actions_auto_auth) {
     const res = await fetch('/api/v1/public/ui-session', {
       method: 'POST',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' }
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      credentials: 'include'
     });
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      throw new Error(data?.error || 'Session opérateur refusée');
+      const msg = data?.error === 'too_many_attempts'
+        ? 'Trop de tentatives. Réessayez plus tard.'
+        : (data?.error || 'Session opérateur refusée');
+      throw new Error(msg);
     }
 
-    saveSession({ ui_session: data.ui_session, actor: data.actor });
+    saveSession({ actor: data.actor });
     return true;
   }
 
   const saved = loadSession();
 
-  if (saved?.ui_session || saved?.token) {
+  if (saved?.actor) {
     state.session = saved;
     return true;
   }
@@ -253,7 +261,7 @@ async function ensureSession() {
   const token = $('token')?.value?.trim();
 
   if (token) {
-    saveSession({ token, actor: { username: 'operator', type: 'internal' } });
+    state.session = { token, actor: { username: 'operator', type: 'internal' } };
     return true;
   }
 
