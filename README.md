@@ -119,12 +119,22 @@ npm start
 
 ## Docker
 
-### Première installation
+**Aucun `git clone` n’est nécessaire** : il suffit de récupérer `docker-compose.yml` (et éventuellement `docker-compose.mysql.yml`) plus un fichier `.env`, puis de lancer l’image publiée sur GHCR.
+
+### Première installation (sans cloner le dépôt)
+
+Créez un dossier dédié (ex. `/opt/iso-watcher-docker`) :
 
 ```bash
-cp .env.example .env
-# INTRANET_SHARED_TOKEN obligatoire
-# Image par défaut : ghcr.io/sannier3/iso-watcher:latest (voir ISO_WATCHER_IMAGE)
+mkdir -p /opt/iso-watcher-docker && cd /opt/iso-watcher-docker
+
+curl -fsSL -o docker-compose.yml \
+  https://raw.githubusercontent.com/sannier3/ISO-WATCHER/main/docker-compose.yml
+
+curl -fsSL -o .env \
+  https://raw.githubusercontent.com/sannier3/ISO-WATCHER/main/.env.example
+
+# Éditez .env : INTRANET_SHARED_TOKEN obligatoire (et autres options si besoin)
 ```
 
 **SQLite** (image du registry, sans build local) :
@@ -134,12 +144,24 @@ docker compose pull
 docker compose up -d
 ```
 
-**MySQL** :
+**MySQL** (téléchargez aussi le compose MySQL) :
 
 ```bash
+curl -fsSL -o docker-compose.mysql.yml \
+  https://raw.githubusercontent.com/sannier3/ISO-WATCHER/main/docker-compose.mysql.yml
+
 # .env : DB_DRIVER=mysql + mots de passe alignés avec docker-compose.mysql.yml
 docker compose -f docker-compose.mysql.yml pull
 docker compose -f docker-compose.mysql.yml up -d
+```
+
+### Si vous avez déjà cloné le dépôt
+
+```bash
+cp .env.example .env
+# INTRANET_SHARED_TOKEN obligatoire
+# Image par défaut : ghcr.io/sannier3/iso-watcher:latest (voir ISO_WATCHER_IMAGE)
+docker compose pull && docker compose up -d
 ```
 
 **Build local** (dev, sans attendre la CI) :

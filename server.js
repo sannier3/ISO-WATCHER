@@ -26,6 +26,7 @@ import {
   setUiSessionCookie
 } from './lib/ui-cookie.js';
 import { createUiSessionStore, assertPrivateNetwork, getClientIp } from './lib/ui-session.js';
+import { createPresetsService } from './lib/presets.js';
 
 /** Sous-dossiers à explorer quand discovery_regex est vide (exclut . et ..). */
 const DEFAULT_DISCOVERY_REGEX = '^[^./][^/]+/$';
@@ -65,6 +66,37 @@ const apiRateLimit = createApiRateLimiter({
   max: config.security.apiRateLimitMax,
   windowMs: config.security.apiRateLimitWindowMs
 });
+const presetsService = createPresetsService({ rootDir: __dirname, config, pool });
+
+function isAdminActor(request) {
+  return request.actor?.type === 'admin';
+}
+
+function replyPresetError(reply, err) {
+  const msg = err?.message || String(err);
+
+  if (msg.startsWith('catalog_fetch_failed')) {
+    return reply.code(502).send({ error: msg });
+  }
+
+  const statusByError = {
+    preset_not_found: 404,
+    presets_remote_url_missing: 400,
+    iso_item_ids_required: 400,
+    iso_items_not_found: 404,
+    no_exportable_presets: 400,
+    invalid_catalog_format: 500,
+    unsupported_catalog_schema: 500,
+    bundled_catalog_missing: 503,
+    catalog_unavailable: 503
+  };
+
+  if (msg.startsWith('invalid_preset') || msg.startsWith('invalid_source')) {
+    return reply.code(500).send({ error: msg });
+  }
+
+  return reply.code(statusByError[msg] || 500).send({ error: msg });
+}
 
 await app.register(cookie);
 await app.register(helmet, buildHelmetOptions(config.security));
@@ -558,6 +590,120 @@ function registerRoutes() {
     return { deleted: true };
   });
 
+  app.get('/api/v1/presets/catalog/meta', async (request, reply) => {
+    if (!isAdminActor(request)) {
+      return reply.code(403).send({ error: 'admin_required' });
+    }
+
+    try {
+      return presetsService.getCatalogMeta();
+    } catch (err) {
+      return replyPresetError(reply, err);
+    }
+  });
+
+  app.get('/api/v1/presets', async (request, reply) => {
+    if (!isAdminActor(request)) {
+      return reply.code(403).send({ error: 'admin_required' });
+    }
+
+    try {
+      return presetsService.listPresets({ q: request.query.q, tag: request.query.tag });
+    } catch (err) {
+      return replyPresetError(reply, err);
+    }
+  });
+
+  app.get('/api/v1/presets/:presetId', async (request, reply) => {
+    if (!isAdminActor(request)) {
+      return reply.code(403).send({ error: 'admin_required' });
+    }
+
+    try {
+      const preset = presetsService.getPreset(request.params.presetId);
+      if (!preset) return reply.code(404).send({ error: 'preset_not_found' });
+      return preset;
+    } catch (err) {
+      return replyPresetError(reply, err);
+    }
+  });
+
+  app.get('/api/v1/presets/exportable', async (request, reply) => {
+    if (!isAdminActor(request)) {
+      return reply.code(403).send({ error: 'admin_required' });
+    }
+
+    try {
+      return await presetsService.listExportableIsoItems({
+        onlyWithOkSources: request.query.only_ok !== 'false'
+      });
+    } catch (err) {
+      return replyPresetError(reply, err);
+    }
+  });
+
+  app.post('/api/v1/presets/catalog/build', async (request, reply) => {
+    if (!isAdminActor(request)) {
+      return reply.code(403).send({ error: 'admin_required' });
+    }
+
+    try {
+      const ids = request.body?.iso_item_ids;
+
+      if (!Array.isArray(ids) || !ids.length) {
+        return reply.code(400).send({ error: 'iso_item_ids_required' });
+      }
+
+      return await presetsService.buildCatalogFromSelection({
+        isoItemIds: ids,
+        onlyOkSources: request.body?.only_ok_sources !== false,
+        catalogId: request.body?.catalog_id || 'iso-watcher-community'
+      });
+    } catch (err) {
+      return replyPresetError(reply, err);
+    }
+  });
+
+  app.post('/api/v1/presets/catalog/refresh', async (request, reply) => {
+    if (!isAdminActor(request)) {
+      return reply.code(403).send({ error: 'admin_required' });
+    }
+
+    try {
+      const url = request.body?.url || config.presets.remoteUrl;
+      return await presetsService.refreshFromRemote(url);
+    } catch (err) {
+      return replyPresetError(reply, err);
+    }
+  });
+
+  app.post('/api/v1/presets/:presetId/apply', async (request, reply) => {
+    if (!isAdminActor(request)) {
+      return reply.code(403).send({ error: 'admin_required' });
+    }
+
+    try {
+      const result = await presetsService.applyPreset(request.params.presetId, {
+        mode: request.body?.mode || 'import',
+        created_by_user_id: request.body?.created_by_user_id || null,
+        catalog_source: request.body?.catalog_source || presetsService.getActiveCatalogKind()
+      });
+
+      if (request.body?.run_scan) {
+        const scan = await startScanAsync({
+          isoItemId: result.iso_item_id,
+          triggerType: 'manual',
+          notify: request.body?.notify !== false
+        });
+        result.scan = scan;
+      }
+
+      return result;
+    } catch (err) {
+      return replyPresetError(reply, err);
+    }
+  });
+
   app.get('/api/v1/iso-items', async (request) => {
     const filters = [];
     const params = [];
@@ -594,7 +740,14 @@ function registerRoutes() {
       ]
     );
 
-    return getIsoItem(result.insertId);
+    const item = await getIsoItem(result.insertId);
+
+    await pool.query(
+      'UPDATE iso_items SET catalog_source = ? WHERE id = ? AND catalog_source IS NULL',
+      ['manual', item.id]
+    );
+
+    return getIsoItem(item.id);
   });
 
   app.get('/api/v1/iso-items/:isoItemId', async (request, reply) => {
@@ -674,7 +827,15 @@ function registerRoutes() {
       ]
     );
 
-    return getSource(result.insertId);
+    const source = await getSource(result.insertId);
+
+    await pool.query(
+      `UPDATE iso_sources SET catalog_source = 'manual'
+       WHERE id = ? AND catalog_source IS NULL`,
+      [source.id]
+    );
+
+    return getSource(source.id);
   });
 
   app.patch('/api/v1/sources/:sourceId', async (request, reply) => {

@@ -21,7 +21,8 @@ const state = {
     events: [],
     deliveries: [],
     storageTracked: []
-  }
+  },
+  presetsList: []
 };
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -157,6 +158,7 @@ function renderSourceReadonlyHtml(s) {
       <div><dt>FTP passif</dt><dd>${boolBadge(s.ftp_passive !== false && s.ftp_passive !== 0)}</dd></div>
       <div><dt>Dernière vérif.</dt><dd>${escapeHtml(s.last_checked_at || '—')}</dd></div>
       <div><dt>Dernier scan</dt><dd>${escapeHtml(s.last_scan_at || '—')}</dd></div>
+      <div><dt>Origine</dt><dd>${escapeHtml(s.catalog_source || 'manuel')}${s.catalog_preset_id ? ` · ${escapeHtml(s.catalog_preset_id)}` : ''}${s.catalog_source_key ? ` / ${escapeHtml(s.catalog_source_key)}` : ''}</dd></div>
     </dl>`;
 }
 
@@ -498,10 +500,136 @@ async function loadDashboard() {
   `;
 }
 
+/* ——— Presets catalogue ——— */
+async function loadPresetsMeta() {
+  const el = $('#presets-meta');
+
+  try {
+    const meta = await api('GET', '/presets/catalog/meta');
+    const parts = [
+      `${meta.preset_count ?? 0} modèle(s)`,
+      `source : ${meta.source || '—'}`,
+      meta.updated_at ? `catalogue ${meta.updated_at}` : null,
+      meta.refreshed_at ? `GitHub ${meta.refreshed_at}` : 'pas de synchro GitHub récente'
+    ].filter(Boolean);
+
+    if (el) el.textContent = parts.join(' · ');
+    return meta;
+  } catch (e) {
+    if (el) el.textContent = `Catalogue indisponible : ${e.message}`;
+    return null;
+  }
+}
+
+async function loadPresetsList() {
+  const listEl = $('#presets-list');
+  if (!listEl) return;
+
+  listEl.innerHTML = '<p class="empty">Chargement…</p>';
+
+  const q = $('#presets-search')?.value?.trim() || '';
+  const tag = $('#presets-tag')?.value?.trim() || '';
+  const params = new URLSearchParams();
+
+  if (q) params.set('q', q);
+  if (tag) params.set('tag', tag);
+
+  try {
+    const rows = await api('GET', `/presets?${params}`);
+    state.presetsList = Array.isArray(rows) ? rows : [];
+    renderPresetsList();
+  } catch (e) {
+    listEl.innerHTML = `<p class="empty">Erreur : ${escapeHtml(e.message)}</p>`;
+  }
+}
+
+function renderPresetsList() {
+  const listEl = $('#presets-list');
+  const rows = state.presetsList || [];
+
+  if (!rows.length) {
+    listEl.innerHTML = '<p class="empty">Aucun modèle trouvé.</p>';
+    return;
+  }
+
+  listEl.innerHTML = rows.map((p) => `
+    <div class="preset-row" data-preset-id="${escapeHtml(p.id)}">
+      <div class="preset-row-main">
+        <strong>${escapeHtml(p.label)}</strong>
+        <span class="badge badge-muted">${escapeHtml(p.distribution || '')}</span>
+        <span class="badge badge-muted">${escapeHtml(p.architecture || '')}</span>
+        ${p.imported ? '<span class="badge badge-ok">importé</span>' : '<span class="badge badge-muted">non importé</span>'}
+        <span class="badge badge-muted">${escapeHtml(p.catalog_kind || 'catalogue')}</span>
+        <span class="hint">${p.source_count ?? 0} source(s)</span>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn btn-primary btn-sm" data-preset-import="${escapeHtml(p.id)}">Importer</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-preset-sync="${escapeHtml(p.id)}">Mettre à jour</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-preset-scan="${escapeHtml(p.id)}">Importer + scan</button>
+      </div>
+    </div>`).join('');
+
+  listEl.querySelectorAll('[data-preset-import]').forEach((btn) => {
+    btn.addEventListener('click', () => applyPresetAction(btn.dataset.presetImport, 'import'));
+  });
+
+  listEl.querySelectorAll('[data-preset-sync]').forEach((btn) => {
+    btn.addEventListener('click', () => applyPresetAction(btn.dataset.presetSync, 'sync'));
+  });
+
+  listEl.querySelectorAll('[data-preset-scan]').forEach((btn) => {
+    btn.addEventListener('click', () => applyPresetAction(btn.dataset.presetScan, 'import', true));
+  });
+}
+
+async function applyPresetAction(presetId, mode, runScan = false) {
+  try {
+    const result = await api('POST', `/presets/${presetId}/apply`, {
+      mode,
+      run_scan: runScan,
+      notify: true
+    });
+
+    const msg = result.created
+      ? `ISO #${result.iso_item_id} créée depuis le modèle`
+      : `ISO #${result.iso_item_id} ${mode === 'sync' ? 'mise à jour' : 'déjà présente'}`;
+
+    toast(runScan && result.scan ? `${msg} — scan lancé` : msg, 'success');
+    await Promise.all([loadIsoTab(), loadPresetsList()]);
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+async function refreshPresetsCatalog() {
+  const btn = $('#btn-presets-refresh');
+
+  if (btn) btn.disabled = true;
+
+  try {
+    const result = await api('POST', '/presets/catalog/refresh', {});
+    toast(`Catalogue GitHub actualisé (${result.preset_count} modèles)`, 'success');
+    await loadPresetsMeta();
+    await loadPresetsList();
+  } catch (e) {
+    toast(e.message, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function bindPresetsEvents() {
+  $('#btn-presets-refresh')?.addEventListener('click', () => refreshPresetsCatalog().catch((e) => toast(e.message, 'error')));
+  $('#presets-search')?.addEventListener('input', () => loadPresetsList().catch(() => {}));
+  $('#presets-tag')?.addEventListener('change', () => loadPresetsList().catch(() => {}));
+}
+
 /* ——— ISO ——— */
 async function loadIsoTab() {
   state.isoItems = await api('GET', '/iso-items');
   renderIsoList();
+  await loadPresetsMeta();
+  await loadPresetsList();
 }
 
 function renderIsoList() {
@@ -535,6 +663,7 @@ function renderIsoList() {
               <span class="badge badge-muted">${escapeHtml(iso.architecture || '')}</span>
               ${iso.enabled ? '<span class="badge badge-ok">on</span>' : '<span class="badge badge-muted">off</span>'}
               ${iso.is_public ? '<span class="badge badge-ok">public</span>' : ''}
+              ${iso.catalog_source ? `<span class="badge badge-muted" title="Origine configuration">${escapeHtml(iso.catalog_source)}${iso.catalog_preset_id ? ' · ' + escapeHtml(iso.catalog_preset_id) : ''}</span>` : '<span class="badge badge-muted">manuel</span>'}
             </div>
           </div>
           <span>${open ? '▼' : '▶'}</span>
@@ -1088,6 +1217,8 @@ function bindEvents() {
     state.pagination.iso = 1;
     renderIsoList();
   });
+
+  bindPresetsEvents();
   $('#btn-load-releases')?.addEventListener('click', () => loadReleases());
   $('#releases-latest-only')?.addEventListener('change', () => loadReleases());
 

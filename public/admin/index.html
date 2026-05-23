@@ -118,6 +118,31 @@
             </div>
           </form>
         </article>
+        <article class="card" id="presets-card">
+          <div class="card-head">
+            <h3>Catalogue de configurations</h3>
+            <div class="toolbar">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-presets-refresh">Actualiser depuis GitHub</button>
+            </div>
+          </div>
+          <p id="presets-meta" class="hint">Chargement du catalogue…</p>
+          <p class="hint">Les modèles proviennent de <code>presets/catalog.json</code> sur GitHub (ou du fichier embarqué). Après import, l’origine est enregistrée (<code>github</code>, <code>bundled</code> ou <code>manual</code>).</p>
+          <div class="toolbar presets-toolbar">
+            <input type="search" id="presets-search" class="search-input" placeholder="Rechercher une distribution…">
+            <label class="field-inline">
+              <span>Tag</span>
+              <select id="presets-tag">
+                <option value="">Tous</option>
+                <option value="debian">debian</option>
+                <option value="ubuntu">ubuntu</option>
+                <option value="proxmox">proxmox</option>
+                <option value="rocky">rocky</option>
+                <option value="archlinux">archlinux</option>
+              </select>
+            </label>
+          </div>
+          <div id="presets-list" class="presets-list"></div>
+        </article>
         <article class="card">
           <div class="card-head">
             <h3>ISO enregistrées</h3>
