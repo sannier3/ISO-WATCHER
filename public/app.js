@@ -58,8 +58,26 @@ function loadSession() {
 
 function saveSession(session) {
   const safe = { actor: session?.actor || { username: 'operator', type: 'internal' } };
+
+  if (session?.token) {
+    safe.token = session.token;
+  }
+
   saveJson(SESSION_KEY, safe);
   state.session = safe;
+}
+
+/** Token API ou session opérateur (auto-auth LAN) — pas le visiteur anonyme. */
+function hasOperatorAuth() {
+  if (state.session?.token || loadSession()?.token || $('token')?.value?.trim()) {
+    return true;
+  }
+
+  return Boolean(
+    state.config?.public_actions_enabled
+    && state.config?.public_actions_auto_auth
+    && state.session?.actor
+  );
 }
 
 function apiHeaders() {
@@ -131,6 +149,12 @@ function showLastActionPanel() {
 
 function setLastAction(action) {
   saveJson(LAST_ACTION_KEY, action);
+
+  if (action?.type === 'health' && !hasOperatorAuth()) {
+    renderLastAction();
+    return;
+  }
+
   renderLastAction();
   showLastActionPanel();
 
@@ -144,6 +168,11 @@ function renderLastAction() {
   const panel = $('panel-last-action');
 
   if (!action) {
+    panel.hidden = true;
+    return;
+  }
+
+  if (action.type === 'health' && !hasOperatorAuth()) {
     panel.hidden = true;
     return;
   }
@@ -322,31 +351,58 @@ function formatHealthSummary(health, ready) {
   return lines.join(' ');
 }
 
+/** Libellé court pour visiteurs sans auth (pas de détail technique). */
+function healthStatusFrom(health, ready) {
+  if (!health) {
+    return { ok: false, label: 'Hors ligne', phrase: 'Service indisponible.' };
+  }
+
+  const serviceOk = Boolean(health.ok && ready?.ok !== false);
+  const storageOk = !health.storage?.enabled || health.storage?.ok !== false;
+
+  if (!serviceOk) {
+    return { ok: false, label: 'Hors ligne', phrase: 'Service indisponible.' };
+  }
+
+  if (!storageOk) {
+    return { ok: false, label: 'Dégradé', phrase: 'Service dégradé.' };
+  }
+
+  return { ok: true, label: 'OK', phrase: 'Service opérationnel.' };
+}
+
 function updateHealthUi(health, ready) {
-  const serviceOk = Boolean(health?.ok && ready?.ok !== false);
+  const status = healthStatusFrom(health, ready);
+  const detailed = hasOperatorAuth();
   const label = $('health-pill-label');
   const summary = $('health-summary');
   const headerBtn = $('btn-health-header');
 
   if (label) {
-    if (!health) {
-      label.textContent = 'Hors ligne';
-    } else if (!serviceOk) {
-      label.textContent = 'Erreur';
-    } else if (health.storage?.enabled && !health.storage.ok) {
+    if (!detailed || !health) {
+      label.textContent = status.label;
+    } else if (!status.ok && health.storage?.enabled && !health.storage?.ok) {
       label.textContent = `Stockage · ${health.db_driver || '—'}`;
+    } else if (!Boolean(health.ok && ready?.ok !== false)) {
+      label.textContent = 'Erreur';
     } else {
       label.textContent = `OK · ${health.db_driver || '—'}`;
     }
   }
 
   if (headerBtn) {
-    headerBtn.classList.toggle('ok', serviceOk);
-    headerBtn.classList.toggle('err', !serviceOk);
+    headerBtn.classList.toggle('ok', status.ok);
+    headerBtn.classList.toggle('err', !status.ok);
   }
 
-  if (summary && health) {
-    summary.textContent = formatHealthSummary(health, ready);
+  if (summary) {
+    if (!health) {
+      summary.textContent = 'Impossible de contacter le service.';
+    } else if (detailed) {
+      summary.textContent = formatHealthSummary(health, ready);
+    } else {
+      summary.textContent = status.phrase;
+    }
   }
 }
 
@@ -434,6 +490,7 @@ async function loadReleases() {
 async function runHealthAction() {
   if (state.healthBusy) return;
 
+  const detailed = hasOperatorAuth();
   state.healthBusy = true;
   const startedAt = new Date().toLocaleString('fr-FR');
   const buttons = [$('btn-health'), $('btn-health-header')];
@@ -442,50 +499,55 @@ async function runHealthAction() {
     if (b) b.disabled = true;
   });
 
-  setLastAction({
-    type: 'health',
-    startedAt,
-    pending: true,
-    ok: false,
-    resultText: 'Vérification de /health et /ready…'
-  });
+  if (detailed) {
+    setLastAction({
+      type: 'health',
+      startedAt,
+      pending: true,
+      ok: false,
+      resultText: 'Vérification de /health et /ready…'
+    });
+  }
 
   try {
     const data = await loadHealth();
-    const ok = Boolean(data.health?.ok && data.readyOk);
-    const text = JSON.stringify(
-      {
-        health: data.health,
-        ready: data.ready,
-        storage: data.health?.storage
-      },
-      null,
-      2
-    );
+    const status = healthStatusFrom(data.health, data.ready);
 
-    setLastAction({
-      type: 'health',
-      startedAt,
-      pending: false,
-      ok,
-      resultText: text
-    });
+    if (detailed) {
+      const text = JSON.stringify(
+        {
+          health: data.health,
+          ready: data.ready,
+          storage: data.health?.storage
+        },
+        null,
+        2
+      );
 
-    toast(ok ? 'Santé vérifiée' : 'Problème détecté', ok ? 'success' : 'error');
+      setLastAction({
+        type: 'health',
+        startedAt,
+        pending: false,
+        ok: status.ok,
+        resultText: text
+      });
+    }
+
+    toast(status.phrase, status.ok ? 'success' : 'error');
   } catch (e) {
     updateHealthUi(null, null);
-    $('health-pill-label').textContent = 'Hors ligne';
-    $('btn-health-header')?.classList.add('err');
 
-    setLastAction({
-      type: 'health',
-      startedAt,
-      pending: false,
-      ok: false,
-      resultText: e.message
-    });
+    if (detailed) {
+      setLastAction({
+        type: 'health',
+        startedAt,
+        pending: false,
+        ok: false,
+        resultText: e.message
+      });
+    }
 
-    toast(e.message, 'error');
+    toast(detailed ? e.message : 'Service indisponible.', 'error');
   } finally {
     state.healthBusy = false;
     buttons.forEach((b) => {
@@ -587,6 +649,7 @@ function bindEvents() {
     saveSession({ token, actor: { username: 'operator', type: 'internal' } });
     setOperatorActionsEnabled(true);
     toast('Token enregistré', 'success');
+    loadHealth().catch(() => {});
   });
 }
 
@@ -643,8 +706,13 @@ async function init() {
     $('actions-hint').textContent = 'Actions opérateur désactivées (PUBLIC_UI_ALLOW_ACTIONS=false).';
   }
 
-  renderLastAction();
   const last = loadJson(LAST_ACTION_KEY);
+
+  if (last?.type === 'health' && !hasOperatorAuth()) {
+    localStorage.removeItem(LAST_ACTION_KEY);
+  }
+
+  renderLastAction();
 
   if (last?.pending && last.type === 'scan') {
     startPoll();
