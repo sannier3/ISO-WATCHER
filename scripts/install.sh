@@ -282,9 +282,9 @@ setup_env_file() {
     cp "${example}" "${env_file}"
     local token
     token="$(generate_token)"
-    if grep -q '^INTRANET_SHARED_TOKEN=change-ce-token' "${env_file}" 2>/dev/null; then
+    if grep -qE '^INTRANET_SHARED_TOKEN=(change-ce-token.*)?$' "${env_file}" 2>/dev/null; then
       sed -i "s/^INTRANET_SHARED_TOKEN=.*/INTRANET_SHARED_TOKEN=${token}/" "${env_file}"
-      log "Token INTRANET_SHARED_TOKEN généré automatiquement."
+      log "Token INTRANET_SHARED_TOKEN généré automatiquement (sinon : https://it-tools.tech/token-generator)."
     fi
     warn "Éditez ${env_file} (SMTP, stockage…) puis : systemctl restart ${SERVICE_NAME}"
   else

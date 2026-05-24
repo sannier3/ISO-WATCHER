@@ -14,6 +14,7 @@ Surveillance automatique de releases ISO (miroirs HTTP/FTP) : détection, API RE
 
 - [À quoi ça sert ?](#à-quoi-ça-sert-)
 - [Prérequis](#prérequis)
+- [Génération de `INTRANET_SHARED_TOKEN`](#génération-de-intranet_shared_token)
 - [Choisir une installation](#choisir-une-installation)
 - [Installation rapide (script)](#installation-rapide-script)
 - [Développement local](#développement-local)
@@ -53,38 +54,17 @@ Fichier obligatoire avant tout démarrage : **`.env`** (copié depuis [`.env.exa
 
 ## Génération de `INTRANET_SHARED_TOKEN`
 
-Variable **obligatoire** au démarrage. Elle reste **côté serveur** (`.env`) : les interfaces `/admin` et `/` utilisent un cookie de session signé et n’envoient pas ce secret au navigateur (sauf saisie volontaire du champ « token opérateur » sur la page publique).
+Secret **obligatoire** au démarrage. Il reste dans le fichier **`.env` sur le serveur**. Utilisez le **même** token côté intranet PHP ou atre pour les appels API.
 
-**Option 1 - aléatoire (recommandé en production)**
-
-```bash
-openssl rand -hex 32
-```
-
-Copiez la sortie dans `.env` :
+1. Ouvrez le générateur en ligne : [IT Tools — Token generator](https://it-tools.tech/token-generator)
+2. Générez un token (longueur conseillée : **64 caractères** ou plus)
+3. Collez-le dans `.env` :
 
 ```env
-INTRANET_SHARED_TOKEN=<les 64 caractères hex>
+INTRANET_SHARED_TOKEN=
 ```
 
-**Option 2 - déterministe depuis une phrase maîtresse**
-
-Utile pour retrouver le même token sur plusieurs serveurs sans stocker le hash dans un coffre-fort séparé. Utilisez une phrase **longue et privée** ; l’exemple ci-dessous est celui documenté pour l’environnement interne :
-
-```bash
-printf '%s' 'K6IL1tCq0TwSllDHzL0v4MtriWJ6UETb5jhamldW7eGomrrCBJBpEaFzhGPEteC3' | openssl dgst -sha256 -hex | awk '{print $2}'
-```
-
-Sous **PowerShell** :
-
-```powershell
-$seed = 'K6IL1tCq0TwSllDHzL0v4MtriWJ6UETb5jhamldW7eGomrrCBJBpEaFzhGPEteC3'
--join ([System.Security.Cryptography.SHA256]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes($seed)) | ForEach-Object { $_.ToString('x2') })
-```
-
-Collez le hash SHA-256 (64 caractères hex) dans `INTRANET_SHARED_TOKEN=`. Vous pouvez aussi affecter **directement** la phrase maîtresse si elle fait déjà au moins 32 caractères (l’exemple ci-dessus convient), sans passer par SHA-256.
-
-> Ne commitez jamais `.env`. Si le dépôt est public, ne réutilisez pas l’exemple de phrase telle quelle - générez la vôtre ou utilisez `openssl rand`.
+> Le script [`install.sh`](scripts/install.sh) peut aussi générer un token automatiquement à l’installation. Ne commitez jamais `.env`.
 
 ## Choisir une installation
 
@@ -279,7 +259,7 @@ systemctl restart iso-watcher   # après modification de .env
 
 ## Configuration
 
-Toutes les variables sont documentées dans [`.env.example`](.env.example). Ne commitez **jamais** `.env`.
+Toutes les variables sont documentées dans [`.env.example`](.env.example).
 
 | Groupe | Variables clés |
 |--------|------------------|

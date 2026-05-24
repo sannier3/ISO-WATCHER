@@ -96,7 +96,7 @@ PUBLIC_UI_ALLOW_ACTIONS=false
 
 ## Checklist déploiement
 
-1. Token long et aléatoire (`INTRANET_SHARED_TOKEN`).
+1. Token long et aléatoire (`INTRANET_SHARED_TOKEN`) — par ex. [IT Tools — Token generator](https://it-tools.tech/token-generator).
 2. `ADMIN_UI_AUTH_REQUIRED=true` + `ADMIN_UI_PASSWORD` dédié.
 3. `TRUST_PROXY=true` + `UI_SESSION_COOKIE_SECURE=true` derrière HTTPS.
 4. `PUBLIC_UI_ALLOW_ACTIONS=false` par défaut.
