@@ -515,10 +515,6 @@ function collectNotifyChannelsFromForm(form) {
   if (form.querySelector('[name="ch_discord"]')?.checked) channels.push('discord');
   if (form.querySelector('[name="ch_teams"]')?.checked) channels.push('teams');
   if (form.querySelector('[name="ch_slack"]')?.checked) channels.push('slack');
-  if (form.querySelector('[name="ch_telegram"]')?.checked) channels.push('telegram');
-  if (form.querySelector('[name="ch_ntfy"]')?.checked) channels.push('ntfy');
-  if (form.querySelector('[name="ch_pushover"]')?.checked) channels.push('pushover');
-  if (form.querySelector('[name="ch_matrix"]')?.checked) channels.push('matrix');
   if (form.querySelector('[name="ch_webhook"]')?.checked) channels.push('webhook');
   return channels.length ? channels : ['ui'];
 }
@@ -536,10 +532,6 @@ function applyNotifyConfigToForm(cfg) {
     ['ch_discord', 'discord'],
     ['ch_teams', 'teams'],
     ['ch_slack', 'slack'],
-    ['ch_telegram', 'telegram'],
-    ['ch_ntfy', 'ntfy'],
-    ['ch_pushover', 'pushover'],
-    ['ch_matrix', 'matrix'],
     ['ch_webhook', 'webhook']
   ];
 

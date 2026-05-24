@@ -3472,7 +3472,7 @@ async function sendReleasesToDestination(destination, releases, options = {}) {
     return sendGenericWebhookDestination(destination, releases, { notifyMode, isTest });
   }
 
-  if (['slack_webhook', 'telegram', 'ntfy', 'pushover', 'matrix'].includes(destination.destination_type)) {
+  if (destination.destination_type === 'slack_webhook') {
     return sendDestinationPush(destination, releases, { notifyMode, isTest });
   }
 
@@ -3564,12 +3564,28 @@ async function sendDiscordDestination(destination, releases, options = {}) {
   return lastResponse;
 }
 
+function resolveTeamsOutboundPayload(connectorPayload, destinationConfig = {}) {
+  const mode = String(destinationConfig.teams_payload || '').trim().toLowerCase();
+
+  if (mode === 'adaptive' || mode === 'adaptive_card') {
+    const content = connectorPayload?.attachments?.[0]?.content;
+
+    if (content) {
+      return content;
+    }
+  }
+
+  return connectorPayload;
+}
+
 async function sendTeamsDestination(destination, releases, options = {}) {
   const chunks = chunkTeamsCards(releases, options);
+  const destinationConfig = parseJsonObject(destination.config);
   let lastResponse = null;
 
   for (const payload of chunks) {
-    lastResponse = await postJsonWithRateLimit(destination.target, payload, 'teams');
+    const outbound = resolveTeamsOutboundPayload(payload, destinationConfig);
+    lastResponse = await postJsonWithRateLimit(destination.target, outbound, 'teams');
     await sleep(Math.ceil(1000 / config.limits.teamsMaxRequestsPerSecond));
   }
 
@@ -3778,7 +3794,9 @@ function buildTeamsPayload(facts, { notifyMode = 'immediate', isTest = false } =
     attachments: [
       {
         contentType: 'application/vnd.microsoft.card.adaptive',
+        contentUrl: null,
         content: {
+          $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
           type: 'AdaptiveCard',
           version: '1.4',
           body: [
@@ -3821,7 +3839,7 @@ function buildPreview(destinationType, releases) {
     };
   }
 
-  if (['slack_webhook', 'telegram', 'ntfy', 'pushover', 'matrix'].includes(destinationType)) {
+  if (destinationType === 'slack_webhook') {
     return {
       type: destinationType,
       title: buildReleaseNotificationTitle(releases),

@@ -1,6 +1,6 @@
 # ISO Watcher
 
-Surveillance automatique de releases ISO (miroirs HTTP/FTP) : détection, API REST, notifications (e-mail, Discord, Teams, Slack, Telegram, ntfy, Pushover, Matrix, webhooks) et stockage local optionnel.
+Surveillance automatique de releases ISO (miroirs HTTP/FTP) : détection, API REST, notifications (e-mail, Discord, Teams, Slack, webhooks) et stockage local optionnel.
 
 | | |
 |---|---|
@@ -270,8 +270,8 @@ Toutes les variables sont documentées dans [`.env.example`](.env.example). Ne c
 | Stockage ISO | `STORAGE_*` |
 | Scans planifiés | `SCHEDULER_*`, `SCAN_STARTUP_RECOVERY` |
 | Logs de scan | `SCAN_MAX_LOG_LINES`, `SCAN_LOG_*` (voir section dédiée) |
-| Liens morts / rapports admin | `LINK_CHECK_*`, `ADMIN_NOTIFY_CHANNELS`, `ADMIN_EMAIL`, webhooks admin (`ADMIN_DISCORD_*`, `ADMIN_SLACK_*`, `ADMIN_TELEGRAM_*`, `ADMIN_NTFY_*`, …) |
-| Notifications utilisateurs | API `POST /users/:id/destinations` - types via `GET /destination-types` (e-mail, Slack, Telegram, ntfy, …) |
+| Liens morts / rapports admin | `LINK_CHECK_*`, `ADMIN_NOTIFY_CHANNELS`, `ADMIN_EMAIL`, webhooks admin (`ADMIN_DISCORD_*`, `ADMIN_TEAMS_*`, `ADMIN_SLACK_*`, …) |
+| Notifications utilisateurs | API `POST /users/:id/destinations` - types via `GET /destination-types` (e-mail, Discord, Teams, Slack, webhook générique) |
 | Livraisons | `SMTP_*`, `DELIVERY_CRON`, `DISCORD_*`, `TEAMS_*` |
 
 ## Fonctionnalités
