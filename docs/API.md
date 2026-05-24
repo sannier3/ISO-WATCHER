@@ -1,4 +1,4 @@
-# API ISO Watcher — Référence complète
+# API ISO Watcher - Référence complète
 
 **Version API** : `0.2.0`  
 **Base URL** : `http://<hôte>:<port>` (défaut `http://127.0.0.1:3088`)
@@ -295,7 +295,7 @@ Connexion console `/admin`.
 
 ### `GET /api/v1/admin/overview`
 
-**Auth** : oui — **`X-Actor-Type: admin`** (ou session UI admin)
+**Auth** : oui - **`X-Actor-Type: admin`** (ou session UI admin)
 
 Tableau de bord.
 
@@ -471,7 +471,7 @@ ou `{ "deleted": false, "reason": "not_found" }`
 
 ### `GET /api/v1/iso-items/:isoItemId`
 
-**Auth** : oui — **Réponse** : ISO ou **404** `iso_item_not_found`.
+**Auth** : oui - **Réponse** : ISO ou **404** `iso_item_not_found`.
 
 ---
 
@@ -489,13 +489,13 @@ Champs modifiables : `name`, `system_family`, `distribution`, `edition`, `versio
 
 ### `POST /api/v1/iso-items/:isoItemId/disable`
 
-**Auth** : oui — **Réponse** : `{ "enabled": true|false }` (selon implémentation `setIsoItemEnabled`).
+**Auth** : oui - **Réponse** : `{ "enabled": true|false }` (selon implémentation `setIsoItemEnabled`).
 
 ---
 
 ### `DELETE /api/v1/iso-items/:isoItemId`
 
-**Auth** : oui — **Réponse** : `{ "deleted": true }`.
+**Auth** : oui - **Réponse** : `{ "deleted": true }`.
 
 ---
 
@@ -503,7 +503,7 @@ Champs modifiables : `name`, `system_family`, `distribution`, `edition`, `versio
 
 ### `GET /api/v1/iso-items/:isoItemId/sources`
 
-**Auth** : oui — **Réponse** : tableau de sources triées par `priority`.
+**Auth** : oui - **Réponse** : tableau de sources triées par `priority`.
 
 ---
 
@@ -537,7 +537,7 @@ Champs modifiables : `name`, `system_family`, `distribution`, `edition`, `versio
 
 ### `PATCH /api/v1/sources/:sourceId`
 
-**Auth** : oui — mêmes champs que création (partiels).
+**Auth** : oui - mêmes champs que création (partiels).
 
 ---
 
@@ -596,7 +596,7 @@ Teste la source sans persister de release.
 
 ### `GET /api/v1/iso-items/:isoItemId/latest`
 
-**Auth** : oui — Dernière release `is_latest=true` ou **404** `release_not_found`.
+**Auth** : oui - Dernière release `is_latest=true` ou **404** `release_not_found`.
 
 ---
 
@@ -640,18 +640,18 @@ Métadonnées de téléchargement de la **dernière** release (URL distante, pas
 
 ### `GET /api/v1/releases/recent`
 
-**Auth** : oui — **sauf** `?public=true` (sans token, acteur `public`)
+**Auth** : oui - **sauf** `?public=true` (sans token, acteur `public`)
 
 **Query**
 
 | Paramètre | Défaut | Description |
 |-----------|--------|-------------|
 | `limit` | `50` | 1–500 |
-| `public` | — | `true` = ISO publiques uniquement |
-| `enabled` | — | `true` / `false` sur `iso_items` |
-| `latest` | — | `true` = `is_latest` |
-| `distribution` | — | Filtre |
-| `architecture` | — | Filtre |
+| `public` | - | `true` = ISO publiques uniquement |
+| `enabled` | - | `true` / `false` sur `iso_items` |
+| `latest` | - | `true` = `is_latest` |
+| `distribution` | - | Filtre |
+| `architecture` | - | Filtre |
 
 **Réponse 200** : tableau de releases avec jointure `iso_name`, `distribution`, `architecture`, `edition`.
 
@@ -737,7 +737,7 @@ Interroger `GET /api/v1/scans/:scanRunId` jusqu’à `is_finished: true`.
 
 ### `POST /api/v1/scans/run`
 
-**Auth** : oui — `internal`/`admin` ; ou opérateur si `PUBLIC_UI_ALLOW_ACTIONS=true`
+**Auth** : oui - `internal`/`admin` ; ou opérateur si `PUBLIC_UI_ALLOW_ACTIONS=true`
 
 Scan global de toutes les sources actives.
 
@@ -754,7 +754,7 @@ Scan global de toutes les sources actives.
 
 ### `POST /api/v1/iso-items/:isoItemId/scan`
 
-**Auth** : oui — scan des sources d’un ISO.
+**Auth** : oui - scan des sources d’un ISO.
 
 **Corps** : identique à `scans/run`.
 
@@ -870,7 +870,7 @@ Planifiée via `LINK_CHECK_CRON` si `LINK_CHECK_ENABLED=true`.
 
 ### `GET /api/v1/users/:userId/destinations`
 
-**Auth** : oui — acteur `public` : en-tête `X-Public-Email` + même `userId`.
+**Auth** : oui - acteur `public` : en-tête `X-Public-Email` + même `userId`.
 
 ---
 
@@ -914,13 +914,13 @@ Champs : `destination_type`, `label`, `target`, `enabled`, `config`.
 
 ### `GET /api/v1/users/:userId/subscriptions`
 
-**Auth** : oui — liste avec infos ISO jointes.
+**Auth** : oui - liste avec infos ISO jointes.
 
 ---
 
 ### `GET /api/v1/public/subscriptions?email=`
 
-**Auth** : oui — **400** si e-mail manquant ; `[]` si utilisateur inconnu.
+**Auth** : oui - **400** si e-mail manquant ; `[]` si utilisateur inconnu.
 
 ---
 
@@ -1001,7 +1001,7 @@ Champs : `enabled`, `notify_mode`.
 
 ### `GET /api/v1/notifications/events/:eventId`
 
-**Auth** : oui — détail ou **404** `event_not_found`.
+**Auth** : oui - détail ou **404** `event_not_found`.
 
 ---
 
@@ -1022,7 +1022,7 @@ Max 500 lignes.
 
 ### `POST /api/v1/notifications/deliveries/:deliveryId/retry`
 
-**Auth** : oui — remet en `pending` et relance l’envoi.
+**Auth** : oui - remet en `pending` et relance l’envoi.
 
 ---
 
@@ -1090,13 +1090,13 @@ Aperçu HTML / payload sans envoi.
 
 ## Exemples complets d'appels API
 
-Base : `http://<hôte>:3088` — remplacez `VOTRE_TOKEN` par `INTRANET_SHARED_TOKEN`.
+Base : `http://<hôte>:3088` - remplacez `VOTRE_TOKEN` par `INTRANET_SHARED_TOKEN`.
 
 ### Matrice des acteurs
 
 | Acteur | En-têtes | Usage |
 |--------|----------|--------|
-| **Aucun** | — | `/health`, `/ready`, catalogue `?public=true` |
+| **Aucun** | - | `/health`, `/ready`, catalogue `?public=true` |
 | **public** | Token + `X-Actor-Type: public` + `X-Public-Email` | Portail : ses abonnements/destinations uniquement |
 | **internal** | Token + `X-Actor-Type: internal` | Intranet, scripts, opérateur |
 | **admin** | Token + `X-Actor-Type: admin` ou `X-UI-Session` | Console `/admin`, routes `/admin/*` |
@@ -1157,7 +1157,7 @@ curl -s "http://127.0.0.1:3088/api/v1/releases/recent?public=true&enabled=true&l
 
 ### 2. Utilisateur public
 
-**POST /api/v1/public/subscriptions** — inscription complète
+**POST /api/v1/public/subscriptions** - inscription complète
 
 ```bash
 curl -s -X POST http://127.0.0.1:3088/api/v1/public/subscriptions \
@@ -1187,7 +1187,7 @@ curl -s -X POST http://127.0.0.1:3088/api/v1/public/subscriptions \
 }
 ```
 
-**GET /api/v1/public/subscriptions?email=** — avec `X-Public-Email` pour les routes « propres »
+**GET /api/v1/public/subscriptions?email=** - avec `X-Public-Email` pour les routes « propres »
 
 ```bash
 curl -s "http://127.0.0.1:3088/api/v1/public/subscriptions?email=user@example.com" \
@@ -1196,7 +1196,7 @@ curl -s "http://127.0.0.1:3088/api/v1/public/subscriptions?email=user@example.co
   -H "X-Public-Email: user@example.com"
 ```
 
-**DELETE /api/v1/public/subscriptions** — désabonnement partiel
+**DELETE /api/v1/public/subscriptions** - désabonnement partiel
 
 ```json
 { "deleted": 1 }
@@ -1216,7 +1216,7 @@ curl -s -X POST http://127.0.0.1:3088/api/v1/iso-items \
   -d '{"name":"Debian netinst","distribution":"debian","architecture":"amd64","is_public":true}'
 ```
 
-**POST /api/v1/scans/run** — scan asynchrone
+**POST /api/v1/scans/run** - scan asynchrone
 
 ```json
 {
@@ -1227,9 +1227,9 @@ curl -s -X POST http://127.0.0.1:3088/api/v1/iso-items \
 }
 ```
 
-**GET /api/v1/scans/87** — polling jusqu'à `is_finished: true`
+**GET /api/v1/scans/87** - polling jusqu'à `is_finished: true`
 
-**POST /api/v1/releases/:id/download** — téléchargement local
+**POST /api/v1/releases/:id/download** - téléchargement local
 
 Réponse si fichier déjà présent :
 
@@ -1262,7 +1262,7 @@ Suivi : `GET /api/v1/storage/status` (internal ou admin).
 
 ### 4. Acteur administrateur
 
-**GET /api/v1/admin/overview** — requiert `X-Actor-Type: admin`
+**GET /api/v1/admin/overview** - requiert `X-Actor-Type: admin`
 
 ```json
 {
@@ -1300,7 +1300,7 @@ Suivi : `GET /api/v1/storage/status` (internal ou admin).
 
 Puis : `X-UI-Session: <ui_session>` sur toutes les routes API.
 
-**POST /api/v1/public/ui-session** — opérateur page publique (si `PUBLIC_UI_ACTIONS_AUTO_AUTH=true`)
+**POST /api/v1/public/ui-session** - opérateur page publique (si `PUBLIC_UI_ACTIONS_AUTO_AUTH=true`)
 
 ```json
 {
@@ -1327,8 +1327,8 @@ Puis : `X-UI-Session: <ui_session>` sur toutes les routes API.
 | 404 | `*_not_found` | ISO, release, user, fichier local… |
 | 409 | `link_check_already_running` | Double vérification liens |
 | 409 | `user_has_active_subscriptions` | Suppression user public |
-| 502 | `download_failed` | Téléchargement — voir `message` |
-| 502 | `delivery_failed` | Notification — voir `message` et `channel` |
+| 502 | `download_failed` | Téléchargement - voir `message` |
+| 502 | `delivery_failed` | Notification - voir `message` et `channel` |
 | 503 | `storage_disabled` | `STORAGE_ENABLED=false` |
 
 Exemple erreur téléchargement :
@@ -1353,4 +1353,4 @@ Exemple erreur notification :
 
 ---
 
-*Documentation ISO Watcher v0.2.0 — version HTML : [/docs](http://127.0.0.1:3088/docs) — voir aussi [SECURITY.md](../SECURITY.md).*
+*Documentation ISO Watcher v0.2.0 - version HTML : [/docs](http://127.0.0.1:3088/docs) - voir aussi [SECURITY.md](../SECURITY.md).*

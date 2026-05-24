@@ -29,6 +29,7 @@ Surveillance automatique de releases ISO (miroirs HTTP/FTP) : détection, API RE
 - [Structure du dépôt](#structure-du-dépôt)
 - [Dépannage](#dépannage)
 - [Documentation](#documentation)
+- [Crédits](#crédits)
 - [Licence](#licence)
 
 ## À quoi ça sert ?
@@ -48,7 +49,42 @@ Cas d’usage typiques : miroir interne, veille sur Ubuntu/Debian/Arch, alertes 
 | **Script `install.sh`** | Debian ou Ubuntu, `apt`, `systemd`, root ou `sudo` |
 | **Docker** | Docker Engine + Compose v2 |
 
-Fichier obligatoire avant tout démarrage : **`.env`** (copié depuis [`.env.example`](.env.example)) avec au minimum `INTRANET_SHARED_TOKEN` défini.
+Fichier obligatoire avant tout démarrage : **`.env`** (copié depuis [`.env.example`](.env.example)) avec au minimum `INTRANET_SHARED_TOKEN` défini (voir [génération du token](#génération-de-intranet_shared_token) ci-dessous).
+
+## Génération de `INTRANET_SHARED_TOKEN`
+
+Variable **obligatoire** au démarrage. Elle reste **côté serveur** (`.env`) : les interfaces `/admin` et `/` utilisent un cookie de session signé et n’envoient pas ce secret au navigateur (sauf saisie volontaire du champ « token opérateur » sur la page publique).
+
+**Option 1 - aléatoire (recommandé en production)**
+
+```bash
+openssl rand -hex 32
+```
+
+Copiez la sortie dans `.env` :
+
+```env
+INTRANET_SHARED_TOKEN=<les 64 caractères hex>
+```
+
+**Option 2 - déterministe depuis une phrase maîtresse**
+
+Utile pour retrouver le même token sur plusieurs serveurs sans stocker le hash dans un coffre-fort séparé. Utilisez une phrase **longue et privée** ; l’exemple ci-dessous est celui documenté pour l’environnement interne :
+
+```bash
+printf '%s' 'K6IL1tCq0TwSllDHzL0v4MtriWJ6UETb5jhamldW7eGomrrCBJBpEaFzhGPEteC3' | openssl dgst -sha256 -hex | awk '{print $2}'
+```
+
+Sous **PowerShell** :
+
+```powershell
+$seed = 'K6IL1tCq0TwSllDHzL0v4MtriWJ6UETb5jhamldW7eGomrrCBJBpEaFzhGPEteC3'
+-join ([System.Security.Cryptography.SHA256]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes($seed)) | ForEach-Object { $_.ToString('x2') })
+```
+
+Collez le hash SHA-256 (64 caractères hex) dans `INTRANET_SHARED_TOKEN=`. Vous pouvez aussi affecter **directement** la phrase maîtresse si elle fait déjà au moins 32 caractères (l’exemple ci-dessus convient), sans passer par SHA-256.
+
+> Ne commitez jamais `.env`. Si le dépôt est public, ne réutilisez pas l’exemple de phrase telle quelle - générez la vôtre ou utilisez `openssl rand`.
 
 ## Choisir une installation
 
@@ -57,13 +93,13 @@ Fichier obligatoire avant tout démarrage : **`.env`** (copié depuis [`.env.exa
 | Serveur Debian/Ubuntu (prod, LXC) | [Script `scripts/install.sh`](#installation-rapide-script) |
 | Serveur + base MariaDB locale | Script avec `--mysql` |
 | Test / dev sur poste de travail | [Développement local](#développement-local) |
-| Conteneur, SQLite seul | [Docker Compose](#docker) — `pull` + `up -d` |
+| Conteneur, SQLite seul | [Docker Compose](#docker) - `pull` + `up -d` |
 | Conteneur + MySQL | `docker-compose.mysql.yml` |
 | Mise à jour prod Docker | `docker compose pull && docker compose up -d` |
 
 ## Installation rapide (script)
 
-Dépôt : [github.com/sannier3/ISO-WATCHER](https://github.com/sannier3/ISO-WATCHER) — script : [`scripts/install.sh`](https://github.com/sannier3/ISO-WATCHER/blob/main/scripts/install.sh)
+Dépôt : [github.com/sannier3/ISO-WATCHER](https://github.com/sannier3/ISO-WATCHER) - script : [`scripts/install.sh`](https://github.com/sannier3/ISO-WATCHER/blob/main/scripts/install.sh)
 
 Script cible **Debian / Ubuntu** : installe Node 20, clone le dépôt dans `/opt/iso-watcher`, crée `.env`, installe les dépendances npm et l’unité systemd `iso-watcher`.
 
@@ -110,7 +146,7 @@ Le service systemd ajoute automatiquement `ReadWritePaths` pour `STORAGE_ROOT` o
 git clone https://github.com/sannier3/ISO-WATCHER.git
 cd ISO-WATCHER
 cp .env.example .env
-# Éditez INTRANET_SHARED_TOKEN (obligatoire)
+# Définissez INTRANET_SHARED_TOKEN (obligatoire) - voir section « Génération de INTRANET_SHARED_TOKEN »
 
 npm install
 npm start
@@ -134,7 +170,7 @@ curl -fsSL -o docker-compose.yml \
 curl -fsSL -o .env \
   https://raw.githubusercontent.com/sannier3/ISO-WATCHER/main/.env.example
 
-# Éditez .env : INTRANET_SHARED_TOKEN obligatoire (et autres options si besoin)
+# Définissez INTRANET_SHARED_TOKEN (obligatoire) - voir README, section génération du token
 ```
 
 **SQLite** (image du registry, sans build local) :
@@ -271,7 +307,7 @@ Toutes les variables sont documentées dans [`.env.example`](.env.example). Ne c
 
 Référence complète : [`docs/API.md`](docs/API.md).
 
-**API REST** (`/api/v1/*`) — en-têtes requis :
+**API REST** (`/api/v1/*`) - en-têtes requis :
 
 ```http
 X-Intranet-Token: <INTRANET_SHARED_TOKEN>
@@ -279,7 +315,7 @@ X-Actor-Username: admin
 X-Actor-Type: internal
 ```
 
-**Interfaces web** — session signée `X-UI-Session` (pas de token dans le navigateur). Détails et checklist : [SECURITY.md](SECURITY.md).
+**Interfaces web** - session signée `X-UI-Session` (pas de token dans le navigateur). Détails et checklist : [SECURITY.md](SECURITY.md).
 
 Exemple rapide :
 
@@ -307,7 +343,7 @@ Si `STORAGE_ROOT` pointe vers un montage (ex. `/mnt/ISO`), prévoyez les droits 
 | `SCAN_STARTUP_RECOVERY=interrupt` | Au redémarrage Node, les scans « en cours » passent en **interrompu** (défaut) |
 | `SCAN_STARTUP_RECOVERY=ignore` | Ne pas toucher aux scans `running` orphelins |
 | `SCAN_MAX_LOG_LINES` | Limite de lignes en base (`0` = illimité) |
-| `SCAN_LOG_MIN_LEVEL` | `debug`, `info`, `warn`, `error` — filtre le bruit |
+| `SCAN_LOG_MIN_LEVEL` | `debug`, `info`, `warn`, `error` - filtre le bruit |
 | `SCAN_LOG_API_DEFAULT_LIMIT` | Nombre de logs renvoyés par l’API admin |
 
 Les logs de scan incluent le nom de l’ISO, de la source et l’URL explorée.
@@ -357,6 +393,10 @@ iso-watcher/
 
 Intégration **PHP** ou autre client HTTP : possible via l’API ; le service Node.js reste **autonome** (aucun PHP requis).
 
+## Crédits
+
+Ce projet (code, documentation et fichiers de configuration d’exemple) a été **réalisé avec l’assistance d’une intelligence artificielle** (IA générative), sous relecture et validation humaines.
+
 ## Licence
 
-MIT — voir [LICENSE](LICENSE).
+MIT - voir [LICENSE](LICENSE).

@@ -1,4 +1,4 @@
-# Sécurité — ISO Watcher
+# Sécurité - ISO Watcher
 
 Ce document décrit les risques connus et les bonnes pratiques pour déployer ISO Watcher.
 
@@ -6,9 +6,9 @@ Ce document décrit les risques connus et les bonnes pratiques pour déployer IS
 
 | Mécanisme | Usage | Niveau de confiance |
 |-----------|--------|-------------------|
-| `INTRANET_SHARED_TOKEN` | API (PHP intranet, scripts, intégrations) | Secret partagé — **ne jamais exposer au navigateur** |
+| `INTRANET_SHARED_TOKEN` | API (PHP intranet, scripts, intégrations) | Secret partagé - **ne jamais exposer au navigateur** |
 | Cookie `iw_ui_session` (HttpOnly) | Interfaces `/` et `/admin` | Session signée 12 h, non lisible par JavaScript |
-| En-tête `X-UI-Session` (legacy) | Compatibilité | Même jeton que le cookie — préférer le cookie |
+| En-tête `X-UI-Session` (legacy) | Compatibilité | Même jeton que le cookie - préférer le cookie |
 | `X-Actor-Type` + token | Clients API classiques | Le type d’acteur est **déclaratif** : quiconque possède le token peut se présenter en `admin` |
 
 Le token partagé est la barrière principale de l’API. Protégez-le comme un mot de passe root.
@@ -80,13 +80,13 @@ PUBLIC_UI_ALLOW_ACTIONS=false
 
 - `ADMIN_UI_AUTH_REQUIRED=true` **obligatoire** si le service est joignable hors LAN.
 - `ADMIN_UI_RESTRICT_TO_PRIVATE_NETWORK=true` (défaut) : login refusé depuis IP publiques (sauf si proxy mal configuré).
-- La réponse de login ne doit pas être loguée (contient encore `ui_session` en JSON pour debug — le cookie suffit).
+- La réponse de login ne doit pas être loguée (contient encore `ui_session` en JSON pour debug - le cookie suffit).
 
 ### Page publique (`/`)
 
 - Catalogue : `GET /api/v1/releases/recent?public=true` **sans authentification**.
 - Actions (scan, liens) : `PUBLIC_UI_ALLOW_ACTIONS` + cookie ou token manuel.
-- `PUBLIC_UI_ACTIONS_AUTO_AUTH=true` : droits opérateur automatiques sur le LAN — **ne pas activer sur Internet**.
+- `PUBLIC_UI_ACTIONS_AUTO_AUTH=true` : droits opérateur automatiques sur le LAN - **ne pas activer sur Internet**.
 
 ## Réseau et exposition
 

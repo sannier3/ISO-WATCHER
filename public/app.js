@@ -1,5 +1,5 @@
 /**
- * ISO Watcher — Page publique (catalogue + actions optionnelles)
+ * ISO Watcher - Page publique (catalogue + actions optionnelles)
  */
 const SESSION_KEY = 'iw_public_session';
 const LAST_ACTION_KEY = 'iw_last_action';
@@ -67,7 +67,7 @@ function saveSession(session) {
   state.session = safe;
 }
 
-/** Token API ou session opérateur (auto-auth LAN) — pas le visiteur anonyme. */
+/** Token API ou session opérateur (auto-auth LAN) - pas le visiteur anonyme. */
 function hasOperatorAuth() {
   if (state.session?.token || loadSession()?.token || $('token')?.value?.trim()) {
     return true;
@@ -124,7 +124,7 @@ async function fetchPublic(path) {
 
 function formatBytes(n) {
   const v = Number(n);
-  if (!v || v < 1) return '—';
+  if (!v || v < 1) return '-';
   const u = ['o', 'Ko', 'Mo', 'Go'];
   let x = v;
   let i = 0;
@@ -186,7 +186,7 @@ function renderLastAction() {
     link_check: 'Vérification des liens'
   };
 
-  $('last-action-summary').textContent = `${labels[action.type] || action.type} — ${action.startedAt || ''}`;
+  $('last-action-summary').textContent = `${labels[action.type] || action.type} - ${action.startedAt || ''}`;
   const badge = $('last-action-badge');
 
   if (action.pending) {
@@ -200,7 +200,7 @@ function renderLastAction() {
     badge.className = 'badge badge-error';
   }
 
-  $('last-action-result').textContent = action.resultText || '—';
+  $('last-action-result').textContent = action.resultText || '-';
 }
 
 function stopPoll() {
@@ -294,7 +294,7 @@ async function ensureSession() {
     return true;
   }
 
-  toast('Token API requis — ouvrez « Accès opérateur »', 'error');
+  toast('Token API requis - ouvrez « Accès opérateur »', 'error');
   $('operator-panel').hidden = false;
   $('operator-panel').open = true;
   return false;
@@ -311,7 +311,7 @@ function storageStatusLabel(storage) {
     `écriture : ${storage.writable ? 'oui' : 'non'}`
   ];
 
-  return `Répertoire ISO — ${parts.join(' · ')}.`;
+  return `Répertoire ISO - ${parts.join(' · ')}.`;
 }
 
 function formatHealthSummary(health, ready) {
@@ -321,7 +321,7 @@ function formatHealthSummary(health, ready) {
 
   lines.push(
     serviceOk
-      ? `Service opérationnel — base ${health?.db_driver || '—'}, version ${health?.version || '—'}.`
+      ? `Service opérationnel - base ${health?.db_driver || '-'}, version ${health?.version || '-'}.`
       : 'Le service signale un problème (vérifiez le détail ci-dessous).'
   );
 
@@ -382,11 +382,11 @@ function updateHealthUi(health, ready) {
     if (!detailed || !health) {
       label.textContent = status.label;
     } else if (!status.ok && health.storage?.enabled && !health.storage?.ok) {
-      label.textContent = `Stockage · ${health.db_driver || '—'}`;
+      label.textContent = `Stockage · ${health.db_driver || '-'}`;
     } else if (!Boolean(health.ok && ready?.ok !== false)) {
       label.textContent = 'Erreur';
     } else {
-      label.textContent = `OK · ${health.db_driver || '—'}`;
+      label.textContent = `OK · ${health.db_driver || '-'}`;
     }
   }
 
@@ -443,8 +443,8 @@ function renderReleasesPage() {
   wrap.innerHTML = `<table class="data-table"><thead><tr>
     <th>ISO</th><th>Version</th><th>Fichier</th><th>Taille</th><th>Détectée</th>
   </tr></thead><tbody>${rows.map((r) => `<tr>
-    <td>${escapeHtml(r.iso_name || r.distribution || '—')}</td>
-    <td>${escapeHtml(r.version || '—')}</td>
+    <td>${escapeHtml(r.iso_name || r.distribution || '-')}</td>
+    <td>${escapeHtml(r.version || '-')}</td>
     <td><a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.filename)}</a></td>
     <td>${formatBytes(r.file_size)}</td>
     <td>${escapeHtml(r.detected_at || '')}</td>
@@ -622,7 +622,7 @@ async function runLinkCheckAction() {
       resultText: text
     });
 
-    toast(`Vérification OK — ${data.removed ?? 0} supprimée(s)`, 'success');
+    toast(`Vérification OK - ${data.removed ?? 0} supprimée(s)`, 'success');
     loadReleases().catch(() => {});
   } catch (e) {
     setLastAction({
@@ -681,7 +681,7 @@ async function init() {
 
     $('actions-hint').textContent = state.config.public_actions_auto_auth
       ? 'Scan et vérification des liens (session automatique).'
-      : 'Scan et vérification des liens — token opérateur requis ci-dessous.';
+      : 'Scan et vérification des liens - token opérateur requis ci-dessous.';
 
     if (!state.config.public_actions_auto_auth) {
       $('operator-panel').hidden = false;

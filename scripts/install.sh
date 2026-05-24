@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# ISO Watcher — installation / désinstallation (Debian / Ubuntu, systemd)
+# ISO Watcher - installation / désinstallation (Debian / Ubuntu, systemd)
 #
-# Debian / Ubuntu — root direct (LXC, conteneur) :
+# Debian / Ubuntu - root direct (LXC, conteneur) :
 #   curl -fsSL https://raw.githubusercontent.com/sannier3/ISO-WATCHER/main/scripts/install.sh | bash
 #
 # Avec élévation sudo si nécessaire :
@@ -62,12 +62,12 @@ ensure_privileges() {
     err "Root requis. Relancez avec : curl -fsSL https://raw.githubusercontent.com/sannier3/ISO-WATCHER/main/scripts/install.sh | sudo bash"
   fi
 
-  err "Root requis (uid 0). Pas de sudo détecté — en LXC/conteneur, connectez-vous en root et lancez : bash … (sans sudo)."
+  err "Root requis (uid 0). Pas de sudo détecté - en LXC/conteneur, connectez-vous en root et lancez : bash … (sans sudo)."
 }
 
 detect_os() {
   if [[ ! -f /etc/os-release ]]; then
-    warn "Fichier /etc/os-release absent — Debian/Ubuntu supposé."
+    warn "Fichier /etc/os-release absent - Debian/Ubuntu supposé."
     return 0
   fi
 
@@ -84,7 +84,7 @@ detect_os() {
   esac
 
   if ! command_exists apt-get; then
-    err "apt-get introuvable — installation impossible sur ce système."
+    err "apt-get introuvable - installation impossible sur ce système."
   fi
 }
 
@@ -130,7 +130,7 @@ install_nodejs() {
   apt_install git ca-certificates curl build-essential python3
 
   if ! command_exists node || [[ "$(node_major_version)" -lt 20 ]]; then
-    log "Node.js 20+ requis — dépôt NodeSource…"
+    log "Node.js 20+ requis - dépôt NodeSource…"
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
     apt_install nodejs
   fi
@@ -230,7 +230,7 @@ EOSQL
 configure_env_for_mariadb() {
   local env_file="${INSTALL_DIR}/.env"
 
-  [[ -f "${env_file}" ]] || err "Fichier .env introuvable — impossible de configurer MySQL."
+  [[ -f "${env_file}" ]] || err "Fichier .env introuvable - impossible de configurer MySQL."
 
   log "Configuration .env pour DB_DRIVER=mysql…"
 
@@ -253,7 +253,7 @@ clone_or_update_repo() {
     git -C "${INSTALL_DIR}" checkout "${BRANCH}"
     git -C "${INSTALL_DIR}" pull --ff-only origin "${BRANCH}" 2>/dev/null || true
   elif [[ -f "${INSTALL_DIR}/server.js" ]]; then
-    warn "${INSTALL_DIR} existe sans .git — mise à jour npm uniquement."
+    warn "${INSTALL_DIR} existe sans .git - mise à jour npm uniquement."
   else
     log "Clone ${url} (branche ${BRANCH}) → ${INSTALL_DIR}…"
     mkdir -p "$(dirname "${INSTALL_DIR}")"
@@ -419,7 +419,7 @@ install_systemd_service() {
     if systemctl is-active --quiet "${SERVICE_NAME}"; then
       log "Service ${SERVICE_NAME} actif."
     else
-      warn "Le service ne semble pas démarré — journal : journalctl -u ${SERVICE_NAME} -n 50 --no-pager"
+      warn "Le service ne semble pas démarré - journal : journalctl -u ${SERVICE_NAME} -n 50 --no-pager"
     fi
   fi
 }
@@ -452,7 +452,7 @@ do_install() {
   fi
   echo ""
   if is_root && ! command_exists sudo; then
-    echo "  (Exécution root sans sudo — adapté LXC/conteneur.)"
+    echo "  (Exécution root sans sudo - adapté LXC/conteneur.)"
     echo ""
   fi
 }

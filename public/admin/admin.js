@@ -1,5 +1,5 @@
 /**
- * ISO Watcher — Console d'administration
+ * ISO Watcher - Console d'administration
  */
 const SESSION_KEY = 'iw_admin_session';
 
@@ -58,7 +58,7 @@ const FETCH_CREDENTIALS = { credentials: 'include' };
 
 function formatBytes(n) {
   const v = Number(n);
-  if (!v || v < 1) return '—';
+  if (!v || v < 1) return '-';
   const u = ['o', 'Ko', 'Mo', 'Go', 'To'];
   let x = v;
   let i = 0;
@@ -150,20 +150,20 @@ function renderSourceReadonlyHtml(s) {
   return `
     <dl class="source-detail-grid">
       <div><dt>ID</dt><dd>#${s.id}</dd></div>
-      <div><dt>Protocole</dt><dd>${escapeHtml(s.protocol || '—')}</dd></div>
-      <div><dt>Priorité</dt><dd>${escapeHtml(s.priority ?? '—')}</dd></div>
+      <div><dt>Protocole</dt><dd>${escapeHtml(s.protocol || '-')}</dd></div>
+      <div><dt>Priorité</dt><dd>${escapeHtml(s.priority ?? '-')}</dd></div>
       <div><dt>Activée</dt><dd>${boolBadge(s.enabled, 'on', 'off')}</dd></div>
       <div class="source-detail-wide"><dt>URL</dt><dd><code class="break-all">${escapeHtml(s.url || '')}</code></dd></div>
       <div class="source-detail-wide"><dt>Regex fichier</dt><dd><code class="break-all">${escapeHtml(s.match_regex || '')}</code></dd></div>
-      <div class="source-detail-wide"><dt>Regex version</dt><dd><code class="break-all">${escapeHtml(s.version_regex || '—')}</code></dd></div>
-      <div class="source-detail-wide"><dt>Regex checksum</dt><dd><code class="break-all">${escapeHtml(s.checksum_regex || '—')}</code></dd></div>
+      <div class="source-detail-wide"><dt>Regex version</dt><dd><code class="break-all">${escapeHtml(s.version_regex || '-')}</code></dd></div>
+      <div class="source-detail-wide"><dt>Regex checksum</dt><dd><code class="break-all">${escapeHtml(s.checksum_regex || '-')}</code></dd></div>
       <div><dt>Découverte</dt><dd>${boolBadge(s.discovery_enabled)}</dd></div>
-      <div><dt>Profondeur</dt><dd>${escapeHtml(s.discovery_depth ?? '—')}</dd></div>
-      <div class="source-detail-wide"><dt>Regex dossiers</dt><dd><code class="break-all">${escapeHtml(s.discovery_regex || '—')}</code></dd></div>
+      <div><dt>Profondeur</dt><dd>${escapeHtml(s.discovery_depth ?? '-')}</dd></div>
+      <div class="source-detail-wide"><dt>Regex dossiers</dt><dd><code class="break-all">${escapeHtml(s.discovery_regex || '-')}</code></dd></div>
       <div><dt>TLS insecure</dt><dd>${boolBadge(s.allow_insecure_tls)}</dd></div>
       <div><dt>FTP passif</dt><dd>${boolBadge(s.ftp_passive !== false && s.ftp_passive !== 0)}</dd></div>
-      <div><dt>Dernière vérif.</dt><dd>${escapeHtml(s.last_checked_at || '—')}</dd></div>
-      <div><dt>Dernier scan</dt><dd>${escapeHtml(s.last_scan_at || '—')}</dd></div>
+      <div><dt>Dernière vérif.</dt><dd>${escapeHtml(s.last_checked_at || '-')}</dd></div>
+      <div><dt>Dernier scan</dt><dd>${escapeHtml(s.last_scan_at || '-')}</dd></div>
       <div><dt>Origine</dt><dd>${escapeHtml(s.catalog_source || 'manuel')}${s.catalog_preset_id ? ` · ${escapeHtml(s.catalog_preset_id)}` : ''}${s.catalog_source_key ? ` / ${escapeHtml(s.catalog_source_key)}` : ''}</dd></div>
     </dl>`;
 }
@@ -242,7 +242,7 @@ function scanStatusBadge(status) {
     partial_error: ['badge-warn', 'Partiel'],
     interrupted: ['badge-muted', 'Interrompu']
   };
-  const [cls, label] = map[status] || ['badge-muted', status || '—'];
+  const [cls, label] = map[status] || ['badge-muted', status || '-'];
   return `<span class="badge ${cls}">${escapeHtml(label)}</span>`;
 }
 
@@ -359,7 +359,7 @@ async function apiPublic(method, path, body = null) {
   return data;
 }
 
-/* ——— Auth ——— */
+/* --- Auth --- */
 async function initAuth() {
   const cfg = await apiPublic('GET', '/admin/ui-config');
   state.uiConfig = cfg;
@@ -434,11 +434,11 @@ function showApp() {
   $('#auth-loading').hidden = true;
   $('#login-screen').hidden = true;
   $('#app').hidden = false;
-  $('#sidebar-version').textContent = `v${state.uiConfig?.version || '—'}`;
+  $('#sidebar-version').textContent = `v${state.uiConfig?.version || '-'}`;
   switchTab('dashboard');
 }
 
-/* ——— Navigation ——— */
+/* --- Navigation --- */
 function switchTab(tab) {
   state.activeTab = tab;
   $$('.nav-item').forEach((btn) => btn.classList.toggle('is-active', btn.dataset.tab === tab));
@@ -478,7 +478,7 @@ async function refreshAll() {
   }
 }
 
-/* ——— Dashboard ——— */
+/* --- Dashboard --- */
 async function loadDashboard() {
   const data = await api('GET', '/admin/overview');
   const c = data.counts || {};
@@ -507,7 +507,7 @@ async function loadDashboard() {
   `;
 }
 
-/* ——— Rapports admin ——— */
+/* --- Rapports admin --- */
 function collectNotifyChannelsFromForm(form) {
   const channels = [];
   if (form.querySelector('[name="ch_ui"]')?.checked) channels.push('ui');
@@ -543,7 +543,7 @@ function applyNotifyConfigToForm(cfg) {
 }
 
 function formatNotifyResults(results) {
-  if (!results || typeof results !== 'object') return '—';
+  if (!results || typeof results !== 'object') return '-';
   return Object.entries(results)
     .map(([ch, r]) => `${ch}: ${r?.ok ? 'OK' : (r?.error || 'échec')}`)
     .join(' · ');
@@ -584,10 +584,10 @@ async function loadReportsList(selectId) {
       <tbody>${reports.map((r) => {
         const summary = r.type === 'link_check' && r.stats
           ? `${r.stats.checked} vérifiées, ${r.stats.removed} retirées`
-          : (r.release_count != null ? `${r.release_count} release(s)` : '—');
+          : (r.release_count != null ? `${r.release_count} release(s)` : '-');
         const date = r.created_at
           ? new Date(r.created_at).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })
-          : '—';
+          : '-';
         return `<tr>
           <td>${escapeHtml(date)}</td>
           <td>${escapeHtml(REPORT_TYPE_LABELS[r.type] || r.type)}</td>
@@ -709,7 +709,7 @@ async function runLinkCheckFromForm(e) {
   }
 }
 
-/* ——— Presets catalogue ——— */
+/* --- Presets catalogue --- */
 async function loadPresetsMeta() {
   const el = $('#presets-meta');
 
@@ -717,7 +717,7 @@ async function loadPresetsMeta() {
     const meta = await api('GET', '/presets/catalog/meta');
     const parts = [
       `${meta.preset_count ?? 0} modèle(s)`,
-      `source : ${meta.source || '—'}`,
+      `source : ${meta.source || '-'}`,
       meta.updated_at ? `catalogue ${meta.updated_at}` : null,
       meta.refreshed_at ? `GitHub ${meta.refreshed_at}` : 'pas de synchro GitHub récente'
     ].filter(Boolean);
@@ -814,7 +814,7 @@ async function applyPresetAction(presetId, mode, runScan = false) {
       ? `ISO #${result.iso_item_id} créée depuis le modèle`
       : `ISO #${result.iso_item_id} ${mode === 'sync' ? 'mise à jour' : 'déjà présente'}`;
 
-    toast(runScan && result.scan ? `${msg} — scan lancé` : msg, 'success');
+    toast(runScan && result.scan ? `${msg} - scan lancé` : msg, 'success');
     await Promise.all([loadIsoTab(), loadPresetsList()]);
   } catch (e) {
     toast(e.message, 'error');
@@ -844,7 +844,7 @@ function bindPresetsEvents() {
   $('#presets-tag')?.addEventListener('change', () => loadPresetsList().catch(() => {}));
 }
 
-/* ——— ISO ——— */
+/* --- ISO --- */
 async function loadIsoTab() {
   state.isoItems = await api('GET', '/iso-items?include_catalog_drift=true');
   renderIsoList();
@@ -974,7 +974,7 @@ async function loadIsoDetail(isoId) {
     <h4 class="section-title">Releases récentes (${releases.length})</h4>
     ${releases.length ? `<div class="table-scroll"><table class="data-table"><thead><tr><th>Version</th><th>Fichier</th><th>URL</th><th>Stockage</th></tr></thead><tbody>
       ${releases.map((r) => `<tr>
-        <td>${escapeHtml(r.version || '—')}</td>
+        <td>${escapeHtml(r.version || '-')}</td>
         <td class="break-all">${escapeHtml(r.filename)}</td>
         <td class="break-all"><a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">lien</a></td>
         <td>${dlStatusBadge(r.download_status)}</td>
@@ -1030,7 +1030,7 @@ function bindIsoDetailActions(body, isoId) {
     btn.addEventListener('click', async () => {
       try {
         const r = await api('POST', `/sources/${btn.dataset.id}/test`);
-        toast(`Test OK — ${r.matches?.length ?? 0} correspondance(s)`, 'success');
+        toast(`Test OK - ${r.matches?.length ?? 0} correspondance(s)`, 'success');
       } catch (e) {
         toast(e.message, 'error');
       }
@@ -1076,8 +1076,8 @@ function renderReleasesTable() {
   el.innerHTML = `<table class="data-table"><thead><tr>
     <th>ISO</th><th>Version</th><th>Fichier</th><th>Taille</th><th>Stockage</th><th>Détectée</th><th></th>
   </tr></thead><tbody>${meta.items.map((r) => `<tr>
-    <td>${escapeHtml(r.iso_name || r.distribution || '—')}</td>
-    <td>${escapeHtml(r.version || '—')}</td>
+    <td>${escapeHtml(r.iso_name || r.distribution || '-')}</td>
+    <td>${escapeHtml(r.version || '-')}</td>
     <td title="${escapeHtml(r.filename)}">${escapeHtml(r.filename)}</td>
     <td>${formatBytes(r.file_size)}</td>
     <td>${dlStatusBadge(r.download_status)}</td>
@@ -1099,9 +1099,9 @@ function renderReleasesTable() {
         const r = await api('POST', `/releases/${releaseId}/download`);
 
         if (r.linked || r.skipped_download) {
-          toast('Fichier local déjà présent — référencé sans retéléchargement', 'success');
+          toast('Fichier local déjà présent - référencé sans retéléchargement', 'success');
         } else if (r.accepted || r.status === 'downloading') {
-          toast(r.message || 'Téléchargement démarré — suivi dans Stockage', 'info');
+          toast(r.message || 'Téléchargement démarré - suivi dans Stockage', 'info');
         } else if (r.ok) {
           toast('Téléchargement terminé', 'success');
         } else {
@@ -1124,7 +1124,7 @@ function renderReleasesTable() {
   });
 }
 
-/* ——— Releases ——— */
+/* --- Releases --- */
 async function loadReleases() {
   const latest = $('#releases-latest-only')?.checked;
   let path = '/releases/recent?limit=500';
@@ -1134,7 +1134,7 @@ async function loadReleases() {
   renderReleasesTable();
 }
 
-/* ——— Scans ——— */
+/* --- Scans --- */
 function renderScansTable() {
   const rows = state.lists.scans;
   const el = $('#scans-table');
@@ -1150,7 +1150,7 @@ function renderScansTable() {
     <th>ID</th><th>Statut</th><th>Type</th><th>Sources</th><th>Nouv.</th><th>Début</th><th></th>
   </tr></thead><tbody>${meta.items.map((s) => `<tr>
     <td>#${s.id}</td><td>${scanStatusBadge(s.status)}</td><td>${escapeHtml(s.trigger_type)}</td>
-    <td>${s.completed_sources ?? 0}/${s.total_sources ?? s.checked_sources ?? '—'}</td>
+    <td>${s.completed_sources ?? 0}/${s.total_sources ?? s.checked_sources ?? '-'}</td>
     <td>${s.new_releases ?? 0}</td><td>${escapeHtml(s.started_at)}</td>
     <td><button class="btn btn-secondary btn-sm" data-scan-detail="${s.id}">Détail</button></td>
   </tr>`).join('')}</tbody></table>`;
@@ -1184,14 +1184,14 @@ async function showScanDetail(id) {
     const logsRes = await api('GET', `/scans/${id}/logs?limit=5000`);
     const logEntries = Array.isArray(logsRes?.logs) ? logsRes.logs : (Array.isArray(logsRes) ? logsRes : []);
 
-    $('#scan-detail-title').textContent = `Scan #${id} — ${scan.status}`;
+    $('#scan-detail-title').textContent = `Scan #${id} - ${scan.status}`;
     const sources = scan.sources || [];
 
     $('#scan-detail-body').innerHTML = `
       <div class="scan-detail-meta">
         <p>Statut : ${scanStatusBadge(scan.status)} · Progression : <strong>${scan.progress_percent ?? 0}%</strong></p>
-        <p>Nouvelles releases : <strong>${scan.new_releases ?? 0}</strong> · Sources : ${scan.completed_sources ?? 0}/${scan.total_sources ?? '—'} · Durée : ${scan.duration_ms ?? '—'} ms</p>
-        <p class="hint">Début : ${escapeHtml(scan.started_at || '—')} · Fin : ${escapeHtml(scan.finished_at || '—')}</p>
+        <p>Nouvelles releases : <strong>${scan.new_releases ?? 0}</strong> · Sources : ${scan.completed_sources ?? 0}/${scan.total_sources ?? '-'} · Durée : ${scan.duration_ms ?? '-'} ms</p>
+        <p class="hint">Début : ${escapeHtml(scan.started_at || '-')} · Fin : ${escapeHtml(scan.finished_at || '-')}</p>
       </div>
       ${sources.length ? `<div class="table-scroll"><table class="data-table"><thead><tr><th>ISO</th><th>Source</th><th>URL</th><th>Statut</th><th>Match</th><th>Nouv.</th><th>Erreur</th></tr></thead><tbody>
         ${sources.map((r) => `<tr>
@@ -1201,11 +1201,11 @@ async function showScanDetail(id) {
           <td>${scanStatusBadge(r.status)}</td>
           <td>${r.matches_found ?? 0}</td>
           <td>${r.new_releases ?? 0}</td>
-          <td class="break-all">${escapeHtml(r.error_message || '—')}</td>
+          <td class="break-all">${escapeHtml(r.error_message || '-')}</td>
         </tr>`).join('')}
       </tbody></table></div>` : '<p class="empty">Aucune source dans ce scan.</p>'}
       <h4 class="section-title">Logs (${logEntries.length})</h4>
-      <pre class="code-block code-block-tall">${escapeHtml(logEntries.map((l) => `[${l.level}] ${l.message}`).join('\n') || '—')}</pre>
+      <pre class="code-block code-block-tall">${escapeHtml(logEntries.map((l) => `[${l.level}] ${l.message}`).join('\n') || '-')}</pre>
     `;
   } catch (e) {
     $('#scan-detail-body').innerHTML = `<p class="empty">Erreur : ${escapeHtml(e.message)}</p>`;
@@ -1213,7 +1213,7 @@ async function showScanDetail(id) {
   }
 }
 
-/* ——— Storage ——— */
+/* --- Storage --- */
 function renderStorageTable() {
   const tracked = state.lists.storageTracked;
   const meta = paginateSlice(tracked, state.pagination.storage);
@@ -1256,7 +1256,7 @@ async function loadStorage() {
   renderStorageTable();
 }
 
-/* ——— Notifications ——— */
+/* --- Notifications --- */
 function renderEventsTable() {
   const events = state.lists.events;
   const meta = paginateSlice(events, state.pagination.events);
@@ -1333,7 +1333,7 @@ async function loadNotifications() {
   renderDeliveriesTable();
 }
 
-/* ——— Users ——— */
+/* --- Users --- */
 function renderUsersTable() {
   const users = state.lists.users;
   const meta = paginateSlice(users, state.pagination.users);
@@ -1348,8 +1348,8 @@ function renderUsersTable() {
   host.innerHTML = `<table class="data-table"><thead><tr><th>ID</th><th>Type</th><th>Nom</th><th>Email</th><th></th></tr></thead><tbody>
     ${meta.items.map((u) => `<tr>
       <td>#${u.id}</td><td>${escapeHtml(u.user_type)}</td>
-      <td>${escapeHtml(u.display_name || u.username || '—')}</td>
-      <td>${escapeHtml(u.email || '—')}</td>
+      <td>${escapeHtml(u.display_name || u.username || '-')}</td>
+      <td>${escapeHtml(u.email || '-')}</td>
       <td><button class="btn btn-secondary btn-sm" data-user-id="${u.id}">Détails</button></td>
     </tr>`).join('')}
   </tbody></table>`;
@@ -1378,15 +1378,15 @@ async function loadUserDetail(userId) {
   ]);
   $('#user-detail').innerHTML = `
     <h4 style="margin-top:1rem">${escapeHtml(user.display_name || user.username || 'Utilisateur #' + userId)}</h4>
-    <p class="hint">Type : ${escapeHtml(user.user_type)} · Email : ${escapeHtml(user.email || '—')}</p>
+    <p class="hint">Type : ${escapeHtml(user.user_type)} · Email : ${escapeHtml(user.email || '-')}</p>
     <h5>Destinations (${dests.length})</h5>
-    ${dests.length ? `<ul>${dests.map((d) => `<li>#${d.id} ${escapeHtml(d.destination_type)} — ${escapeHtml(d.label || d.target)}</li>`).join('')}</ul>` : '<p class="empty">—</p>'}
+    ${dests.length ? `<ul>${dests.map((d) => `<li>#${d.id} ${escapeHtml(d.destination_type)} - ${escapeHtml(d.label || d.target)}</li>`).join('')}</ul>` : '<p class="empty">-</p>'}
     <h5>Abonnements (${subs.length})</h5>
-    ${subs.length ? `<ul>${subs.map((s) => `<li>ISO #${s.iso_item_id} — ${escapeHtml(s.notify_mode)}</li>`).join('')}</ul>` : '<p class="empty">—</p>'}
+    ${subs.length ? `<ul>${subs.map((s) => `<li>ISO #${s.iso_item_id} - ${escapeHtml(s.notify_mode)}</li>`).join('')}</ul>` : '<p class="empty">-</p>'}
   `;
 }
 
-/* ——— System ——— */
+/* --- System --- */
 async function loadSystem() {
   const [health, ready, overview] = await Promise.all([
     fetch('/health').then((r) => r.json()),
@@ -1398,7 +1398,7 @@ async function loadSystem() {
   $('#system-config').textContent = JSON.stringify(overview.config || {}, null, 2);
 }
 
-/* ——— Events ——— */
+/* --- Events --- */
 function bindEvents() {
   $('#login-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();

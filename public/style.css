@@ -102,7 +102,7 @@ th { color: var(--muted); font-weight: 600; }
 footer { margin-top: 2rem; color: var(--muted); }
 footer a { color: var(--accent); }
 
-/* ——— Page publique ——— */
+/* --- Page publique --- */
 .panel[hidden],
 .auth-loading[hidden] {
   display: none !important;

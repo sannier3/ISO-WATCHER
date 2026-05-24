@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ISO Watcher — Documentation API</title>
+  <title>ISO Watcher - Documentation API</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -246,7 +246,7 @@
             <tr><td class="method delete">DELETE</td><td><code>/api/v1/public/users/by-email?email=</code></td><td>Suppression</td></tr>
           </tbody>
         </table>
-        <h4>POST /users/upsert — corps</h4>
+        <h4>POST /users/upsert - corps</h4>
         <table>
           <thead><tr><th>Champ</th><th>Type</th><th>Description</th></tr></thead>
           <tbody>
@@ -265,7 +265,7 @@
           <thead><tr><th>Méthode</th><th>Route</th><th>Notes</th></tr></thead>
           <tbody>
             <tr><td class="method get">GET</td><td><code>/api/v1/iso-items</code></td><td>Query : <code>distribution</code>, <code>architecture</code>, <code>enabled</code>, <code>public</code></td></tr>
-            <tr><td class="method post">POST</td><td><code>/api/v1/iso-items</code></td><td>Création — voir API.md</td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/iso-items</code></td><td>Création - voir API.md</td></tr>
             <tr><td class="method get">GET</td><td><code>/api/v1/iso-items/:id</code></td><td>Détail</td></tr>
             <tr><td class="method patch">PATCH</td><td><code>/api/v1/iso-items/:id</code></td><td>Mise à jour partielle</td></tr>
             <tr><td class="method post">POST</td><td><code>/api/v1/iso-items/:id/enable|disable</code></td><td>Activation</td></tr>
@@ -292,9 +292,9 @@
             <tr><td class="method delete">DELETE</td><td><code>/api/v1/sources/:sourceId</code></td></tr>
           </tbody>
         </table>
-        <h4>Création source — champs principaux</h4>
+        <h4>Création source - champs principaux</h4>
         <p><code>name</code>, <code>url</code>, <code>match_regex</code>, <code>version_regex</code>, <code>checksum_regex</code>, <code>discovery_enabled</code>, <code>discovery_depth</code> (1–6), <code>discovery_regex</code>, <code>priority</code>, <code>allow_insecure_tls</code>, <code>ftp_passive</code>.</p>
-        <h4>POST …/test — réponse</h4>
+        <h4>POST …/test - réponse</h4>
         <pre>{ "ok": true, "source_id": 1, "matches": [...], "discovery": { "enabled": true, "scanned_directories": 3 } }</pre>
       </section>
 
@@ -335,13 +335,13 @@
         <table>
           <thead><tr><th>Méthode</th><th>Route</th></tr></thead>
           <tbody>
-            <tr><td class="method post">POST</td><td><code>/api/v1/scans/run</code> — global</td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/scans/run</code> - global</td></tr>
             <tr><td class="method post">POST</td><td><code>/api/v1/iso-items/:id/scan</code></td></tr>
             <tr><td class="method post">POST</td><td><code>/api/v1/sources/:id/scan</code></td></tr>
-            <tr><td class="method post">POST</td><td><code>/api/v1/scans/test</code> — test source + notif optionnelle</td></tr>
-            <tr><td class="method get">GET</td><td><code>/api/v1/scans</code> — Query <code>limit</code></td></tr>
-            <tr><td class="method get">GET</td><td><code>/api/v1/scans/:scanRunId</code> — Query <code>log_limit</code>, <code>log_since_id</code></td></tr>
-            <tr><td class="method get">GET</td><td><code>/api/v1/scans/:scanRunId/logs</code> — Query <code>limit</code>, <code>since_id</code></td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/scans/test</code> - test source + notif optionnelle</td></tr>
+            <tr><td class="method get">GET</td><td><code>/api/v1/scans</code> - Query <code>limit</code></td></tr>
+            <tr><td class="method get">GET</td><td><code>/api/v1/scans/:scanRunId</code> - Query <code>log_limit</code>, <code>log_since_id</code></td></tr>
+            <tr><td class="method get">GET</td><td><code>/api/v1/scans/:scanRunId/logs</code> - Query <code>limit</code>, <code>since_id</code></td></tr>
           </tbody>
         </table>
         <p>Statuts scan : <code>running</code>, <code>success</code>, <code>error</code>, <code>partial_error</code>. Champs calculés : <code>is_finished</code>, <code>progress_percent</code>.</p>
@@ -389,10 +389,10 @@
             <tr><td class="method get">GET</td><td><code>/api/v1/users/:userId/subscriptions</code></td></tr>
             <tr><td class="method get">GET</td><td><code>/api/v1/public/subscriptions?email=</code></td></tr>
             <tr><td class="method post">POST</td><td><code>/api/v1/users/:userId/subscriptions</code></td></tr>
-            <tr><td class="method post">POST</td><td><code>/api/v1/public/subscriptions</code> — inscription complète</td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/public/subscriptions</code> - inscription complète</td></tr>
             <tr><td class="method patch">PATCH</td><td><code>/api/v1/subscriptions/:subscriptionId</code></td></tr>
             <tr><td class="method delete">DELETE</td><td><code>/api/v1/subscriptions/:subscriptionId</code></td></tr>
-            <tr><td class="method delete">DELETE</td><td><code>/api/v1/public/subscriptions</code> — corps <code>email</code> + <code>iso_item_ids</code></td></tr>
+            <tr><td class="method delete">DELETE</td><td><code>/api/v1/public/subscriptions</code> - corps <code>email</code> + <code>iso_item_ids</code></td></tr>
           </tbody>
         </table>
         <p><code>notify_mode</code> : <code>immediate</code>, <code>hourly_digest</code>, <code>daily_digest</code>.</p>
@@ -403,12 +403,12 @@
         <table>
           <thead><tr><th>Méthode</th><th>Route</th></tr></thead>
           <tbody>
-            <tr><td class="method get">GET</td><td><code>/api/v1/notifications/events</code> — Query <code>limit</code></td></tr>
+            <tr><td class="method get">GET</td><td><code>/api/v1/notifications/events</code> - Query <code>limit</code></td></tr>
             <tr><td class="method get">GET</td><td><code>/api/v1/notifications/events/:eventId</code></td></tr>
-            <tr><td class="method get">GET</td><td><code>/api/v1/notifications/deliveries</code> — Query <code>status</code>, <code>destination_id</code></td></tr>
+            <tr><td class="method get">GET</td><td><code>/api/v1/notifications/deliveries</code> - Query <code>status</code>, <code>destination_id</code></td></tr>
             <tr><td class="method post">POST</td><td><code>/api/v1/notifications/deliveries/:deliveryId/retry</code></td></tr>
             <tr><td class="method post">POST</td><td><code>/api/v1/notifications/test</code></td></tr>
-            <tr><td class="method post">POST</td><td><code>/api/v1/notifications/preview</code> — <code>destination_type</code>, <code>release_ids</code></td></tr>
+            <tr><td class="method post">POST</td><td><code>/api/v1/notifications/preview</code> - <code>destination_type</code>, <code>release_ids</code></td></tr>
           </tbody>
         </table>
       </section>
@@ -424,16 +424,16 @@
       <section id="examples">
         <h2>Exemples complets d'appels API</h2>
         <p class="lead" style="margin-bottom:1.5rem">
-          Base : <code>http://192.168.100.30:3088</code> — remplacez <code>VOTRE_TOKEN</code> par <code>INTRANET_SHARED_TOKEN</code>.
+          Base : <code>http://192.168.100.30:3088</code> - remplacez <code>VOTRE_TOKEN</code> par <code>INTRANET_SHARED_TOKEN</code>.
           Les réponses sont abrégées (<code>…</code>) lorsque le schéma est déjà documenté plus haut.
         </p>
 
         <div class="note">
           <strong>Matrice des acteurs</strong><br>
           <span class="actor-tag actor-none">aucun</span> catalogue public, santé<br>
-          <span class="actor-tag actor-public">public</span> + <code>X-Public-Email</code> — ses abonnements/destinations uniquement<br>
-          <span class="actor-tag actor-internal">internal</span> + token — intranet, scripts, opérateur<br>
-          <span class="actor-tag actor-admin">admin</span> + token ou session UI — console <code>/admin</code>
+          <span class="actor-tag actor-public">public</span> + <code>X-Public-Email</code> - ses abonnements/destinations uniquement<br>
+          <span class="actor-tag actor-internal">internal</span> + token - intranet, scripts, opérateur<br>
+          <span class="actor-tag actor-admin">admin</span> + token ou session UI - console <code>/admin</code>
         </div>
 
         <section id="ex-public">
@@ -441,7 +441,7 @@
 
           <div class="example-block">
             <h4>Santé et catalogue des releases publiques</h4>
-            <p class="req-label">Requête — GET /health</p>
+            <p class="req-label">Requête - GET /health</p>
             <pre>curl -s http://127.0.0.1:3088/health</pre>
             <p class="res-label">Réponse 200</p>
             <pre>{
@@ -458,9 +458,9 @@
     "error": null
   }
 }</pre>
-            <p class="req-label">Requête — GET /api/v1/releases/recent (sans token)</p>
+            <p class="req-label">Requête - GET /api/v1/releases/recent (sans token)</p>
             <pre>curl -s "http://127.0.0.1:3088/api/v1/releases/recent?public=true&amp;enabled=true&amp;limit=5"</pre>
-            <p class="res-label">Réponse 200 — tableau</p>
+            <p class="res-label">Réponse 200 - tableau</p>
             <pre>[
   {
     "id": 42,
@@ -563,7 +563,7 @@
 
           <div class="example-block">
             <h4>Créer une ISO et une source HTTP</h4>
-            <p class="req-label">Requête — POST /api/v1/iso-items</p>
+            <p class="req-label">Requête - POST /api/v1/iso-items</p>
             <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/iso-items \
   -H "X-Intranet-Token: VOTRE_TOKEN" \
   -H "X-Actor-Type: internal" \
@@ -578,7 +578,7 @@
   }'</pre>
             <p class="res-label">Réponse 200</p>
             <pre>{ "id": 15, "name": "Debian netinst", "distribution": "debian", "enabled": 1, "is_public": 1, … }</pre>
-            <p class="req-label">Requête — POST /api/v1/iso-items/15/sources</p>
+            <p class="req-label">Requête - POST /api/v1/iso-items/15/sources</p>
             <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/iso-items/15/sources \
   -H "X-Intranet-Token: VOTRE_TOKEN" \
   -H "X-Actor-Type: internal" \
@@ -601,20 +601,20 @@
 
           <div class="example-block">
             <h4>Lancer un scan global et suivre la progression</h4>
-            <p class="req-label">Requête — POST /api/v1/scans/run</p>
+            <p class="req-label">Requête - POST /api/v1/scans/run</p>
             <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/scans/run \
   -H "X-Intranet-Token: VOTRE_TOKEN" \
   -H "X-Actor-Type: internal" \
   -H "Content-Type: application/json" \
   -d '{ "notify": true }'</pre>
-            <p class="res-label">Réponse 200 (immédiate — scan asynchrone)</p>
+            <p class="res-label">Réponse 200 (immédiate - scan asynchrone)</p>
             <pre>{
   "scan_run_id": 87,
   "status": "running",
   "async": true,
   "message": "Scan accepté et exécuté en arrière-plan"
 }</pre>
-            <p class="req-label">Requête — GET /api/v1/scans/87 (polling)</p>
+            <p class="req-label">Requête - GET /api/v1/scans/87 (polling)</p>
             <pre>curl -s http://127.0.0.1:3088/api/v1/scans/87 \
   -H "X-Intranet-Token: VOTRE_TOKEN"</pre>
             <p class="res-label">Réponse 200 (en cours)</p>
@@ -642,11 +642,11 @@
 
           <div class="example-block">
             <h4>Téléchargement local d'une release (asynchrone)</h4>
-            <p class="req-label">Requête — POST /api/v1/releases/42/download</p>
+            <p class="req-label">Requête - POST /api/v1/releases/42/download</p>
             <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/releases/42/download \
   -H "X-Intranet-Token: VOTRE_TOKEN" \
   -H "X-Actor-Type: internal"</pre>
-            <p class="res-label">Réponse 200 — fichier déjà sur disque</p>
+            <p class="res-label">Réponse 200 - fichier déjà sur disque</p>
             <pre>{
   "ok": true,
   "linked": true,
@@ -654,7 +654,7 @@
   "local_path": "/mnt/ISO/ubuntu-24.04.1-desktop-amd64.iso",
   "file_size": 6345887744
 }</pre>
-            <p class="res-label">Réponse 200 — téléchargement démarré</p>
+            <p class="res-label">Réponse 200 - téléchargement démarré</p>
             <pre>{
   "ok": true,
   "accepted": true,
@@ -663,7 +663,7 @@
   "release_id": 42,
   "message": "Téléchargement démarré en arrière-plan"
 }</pre>
-            <p class="req-label">Suivi — GET /api/v1/storage/status</p>
+            <p class="req-label">Suivi - GET /api/v1/storage/status</p>
             <pre>curl -s http://127.0.0.1:3088/api/v1/storage/status \
   -H "X-Intranet-Token: VOTRE_TOKEN" \
   -H "X-Actor-Type: internal"</pre>
@@ -675,7 +675,7 @@
 
           <div class="example-block">
             <h4>Vue d'ensemble et liste utilisateurs</h4>
-            <p class="req-label">Requête — GET /api/v1/admin/overview</p>
+            <p class="req-label">Requête - GET /api/v1/admin/overview</p>
             <pre>curl -s http://127.0.0.1:3088/api/v1/admin/overview \
   -H "X-Intranet-Token: VOTRE_TOKEN" \
   -H "X-Actor-Type: admin" \
@@ -722,7 +722,7 @@
 
           <div class="example-block">
             <h4>Gestion utilisateur interne + abonnement</h4>
-            <p class="req-label">Requête — POST /api/v1/users/upsert</p>
+            <p class="req-label">Requête - POST /api/v1/users/upsert</p>
             <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/users/upsert \
   -H "X-Intranet-Token: VOTRE_TOKEN" \
   -H "X-Actor-Type: admin" \
@@ -733,7 +733,7 @@
     "email": "noc@jbsan.fr",
     "display_name": "Équipe NOC"
   }'</pre>
-            <p class="req-label">Requête — POST /api/v1/users/12/subscriptions</p>
+            <p class="req-label">Requête - POST /api/v1/users/12/subscriptions</p>
             <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/users/12/subscriptions \
   -H "X-Intranet-Token: VOTRE_TOKEN" \
   -H "X-Actor-Type: admin" \
@@ -743,11 +743,11 @@
         </section>
 
         <section id="ex-ui-session">
-          <h3>5. Sessions UI (navigateur — sans exposer le token)</h3>
+          <h3>5. Sessions UI (navigateur - sans exposer le token)</h3>
 
           <div class="example-block">
-            <h4>Console admin — login puis appels</h4>
-            <p class="req-label">Étape 1 — POST /api/v1/admin/ui-login (sans token)</p>
+            <h4>Console admin - login puis appels</h4>
+            <p class="req-label">Étape 1 - POST /api/v1/admin/ui-login (sans token)</p>
             <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/admin/ui-login \
   -H "Content-Type: application/json" \
   -d '{ "password": "mot-de-passe-admin" }'</pre>
@@ -757,18 +757,18 @@
   "ui_session": "eyJhY3RvciI6eyJ1c2VybmFtZSI6ImFkbWluIiwidHlwZSI6ImFkbWluIn19….signature",
   "actor": { "username": "admin", "type": "admin" }
 }</pre>
-            <p class="req-label">Étape 2 — utiliser X-UI-Session</p>
+            <p class="req-label">Étape 2 - utiliser X-UI-Session</p>
             <pre>curl -s http://127.0.0.1:3088/api/v1/admin/overview \
   -H "X-UI-Session: eyJhY3RvciI6eyJ1c2VybmFtZSI6ImFkbWluIiwidHlwZSI6ImFkbWluIn19….signature"</pre>
             <p class="note">Si <code>ADMIN_UI_AUTH_REQUIRED=false</code>, le corps <code>password</code> peut être vide.</p>
           </div>
 
           <div class="example-block">
-            <h4>Page publique — session opérateur automatique</h4>
-            <p class="req-label">Requête — POST /api/v1/public/ui-session (sans token)</p>
+            <h4>Page publique - session opérateur automatique</h4>
+            <p class="req-label">Requête - POST /api/v1/public/ui-session (sans token)</p>
             <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/public/ui-session \
   -H "Content-Type: application/json"</pre>
-            <p class="res-label">Réponse 200 — si PUBLIC_UI_ALLOW_ACTIONS + PUBLIC_UI_ACTIONS_AUTO_AUTH</p>
+            <p class="res-label">Réponse 200 - si PUBLIC_UI_ALLOW_ACTIONS + PUBLIC_UI_ACTIONS_AUTO_AUTH</p>
             <pre>{
   "ok": true,
   "ui_session": "…",
@@ -786,14 +786,14 @@
           <h3>6. Cas particuliers et erreurs</h3>
 
           <div class="example-block">
-            <h4>401 — Token manquant ou invalide</h4>
+            <h4>401 - Token manquant ou invalide</h4>
             <pre>curl -s http://127.0.0.1:3088/api/v1/iso-items</pre>
             <p class="res-label">Réponse 401</p>
             <pre>{ "error": "unauthorized" }</pre>
           </div>
 
           <div class="example-block">
-            <h4>403 — Acteur insuffisant</h4>
+            <h4>403 - Acteur insuffisant</h4>
             <p class="req-label">internal appelle une route admin</p>
             <pre>curl -s http://127.0.0.1:3088/api/v1/admin/overview \
   -H "X-Intranet-Token: VOTRE_TOKEN" \
@@ -805,7 +805,7 @@
           </div>
 
           <div class="example-block">
-            <h4>403 — Actions publiques désactivées</h4>
+            <h4>403 - Actions publiques désactivées</h4>
             <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/scans/run \
   -H "X-Intranet-Token: VOTRE_TOKEN" \
   -H "X-Actor-Type: internal"</pre>
@@ -814,12 +814,12 @@
           </div>
 
           <div class="example-block">
-            <h4>409 — Vérification liens déjà en cours</h4>
+            <h4>409 - Vérification liens déjà en cours</h4>
             <pre>{ "error": "link_check_already_running" }</pre>
           </div>
 
           <div class="example-block">
-            <h4>502 — Échec téléchargement local</h4>
+            <h4>502 - Échec téléchargement local</h4>
             <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/releases/99/download \
   -H "X-Intranet-Token: VOTRE_TOKEN" \
   -H "X-Actor-Type: admin"</pre>
@@ -833,7 +833,7 @@
           </div>
 
           <div class="example-block">
-            <h4>502 — Échec envoi notification (test destination)</h4>
+            <h4>502 - Échec envoi notification (test destination)</h4>
             <pre>curl -s -X POST http://127.0.0.1:3088/api/v1/destinations/8/test \
   -H "X-Intranet-Token: VOTRE_TOKEN" \
   -H "X-Actor-Type: public" \
@@ -850,14 +850,14 @@
           </div>
 
           <div class="example-block">
-            <h4>400 — Validation métier</h4>
+            <h4>400 - Validation métier</h4>
             <pre>{ "error": "discovery_regex_required" }</pre>
             <pre>{ "error": "email_required" }</pre>
             <pre>{ "error": "iso_item_ids_required" }</pre>
           </div>
 
           <div class="example-block">
-            <h4>404 — Ressource absente</h4>
+            <h4>404 - Ressource absente</h4>
             <pre>{ "error": "iso_item_not_found" }</pre>
             <pre>{ "error": "release_not_found" }</pre>
             <pre>{ "error": "user_not_found" }</pre>
@@ -865,7 +865,7 @@
           </div>
 
           <div class="example-block">
-            <h4>409 — Suppression utilisateur public avec abonnements actifs</h4>
+            <h4>409 - Suppression utilisateur public avec abonnements actifs</h4>
             <pre>curl -s -X DELETE "http://127.0.0.1:3088/api/v1/public/users/by-email?email=user@example.com" \
   -H "X-Intranet-Token: VOTRE_TOKEN"</pre>
             <p class="res-label">Réponse 409</p>

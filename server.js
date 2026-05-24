@@ -1759,7 +1759,7 @@ function formatSourceScanLabel(source) {
 
   const iso = source.iso_name || source.distribution || `ISO#${source.iso_item_id}`;
   const src = source.name || `source#${source.id}`;
-  return `${iso} — ${src}`;
+  return `${iso} - ${src}`;
 }
 
 function formatScanLogMessage(source, message, ctx = {}) {
@@ -1769,7 +1769,7 @@ function formatScanLogMessage(source, message, ctx = {}) {
 
   if (url && !body.includes(url)) {
     const shortUrl = url.length > 160 ? `${url.slice(0, 157)}…` : url;
-    body = body ? `${body} — ${shortUrl}` : shortUrl;
+    body = body ? `${body} - ${shortUrl}` : shortUrl;
   }
 
   return label ? `[${label}] ${body}` : body;
@@ -2110,7 +2110,7 @@ async function processScanSourceRun(scanRunId, source, sourceRunId, options = {}
 
   const sourceLabel = formatSourceScanLabel(source);
 
-  logScan(scanRunId, 'info', 'source', `Début scan — ${sourceLabel}`, {
+  logScan(scanRunId, 'info', 'source', `Début scan - ${sourceLabel}`, {
     source_id: source.id,
     source_name: source.name,
     iso_item_id: source.iso_item_id,
@@ -2119,7 +2119,7 @@ async function processScanSourceRun(scanRunId, source, sourceRunId, options = {}
     url: source.url,
     protocol: source.protocol
   });
-  pushExcerpt(`[info] Début scan — ${sourceLabel} — ${source.url}`);
+  pushExcerpt(`[info] Début scan - ${sourceLabel} - ${source.url}`);
 
   try {
     const sourceResult = await testSource(source, {
@@ -2155,7 +2155,7 @@ async function processScanSourceRun(scanRunId, source, sourceRunId, options = {}
         if (inserted?.isNew) {
           newReleases += 1;
           newReleaseIds.push(inserted.releaseId);
-          pushExcerpt(`[info] Nouvelle release: ${match.filename} v${match.version || '?'} — ${match.url || source.url}`);
+          pushExcerpt(`[info] Nouvelle release: ${match.filename} v${match.version || '?'} - ${match.url || source.url}`);
 
           if (notify) {
             await createNotificationEventAndDeliveries(inserted.releaseId);
@@ -2187,7 +2187,7 @@ async function processScanSourceRun(scanRunId, source, sourceRunId, options = {}
       ]
     );
 
-    logScan(scanRunId, 'info', 'source', `OK — ${sourceLabel} (${matches.length} correspondance(s))`, {
+    logScan(scanRunId, 'info', 'source', `OK - ${sourceLabel} (${matches.length} correspondance(s))`, {
       source_id: source.id,
       source_name: source.name,
       iso_name: source.iso_name,
@@ -2226,7 +2226,7 @@ async function processScanSourceRun(scanRunId, source, sourceRunId, options = {}
       ]
     );
 
-    logScan(scanRunId, 'error', 'source', `Erreur — ${sourceLabel}: ${errorMessage}`, {
+    logScan(scanRunId, 'error', 'source', `Erreur - ${sourceLabel}: ${errorMessage}`, {
       source_id: source.id,
       source_name: source.name,
       iso_name: source.iso_name,
@@ -2583,7 +2583,7 @@ async function collectSourceEntries(source, { onLog } = {}) {
       });
 
       if (dirMatched === 0 && dirSkipped > 0) {
-        log('warn', 'Aucun sous-dossier ne correspond à discovery_regex — vérifiez le motif (ex. Arch : ^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}/$)', {
+        log('warn', 'Aucun sous-dossier ne correspond à discovery_regex - vérifiez le motif (ex. Arch : ^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}/$)', {
           discovery_regex: source.discovery_regex,
           skipped_samples: skippedSamples
         });
@@ -3477,11 +3477,11 @@ function buildEmailSubject(releases, { notifyMode = 'immediate', isTest = false 
   }
 
   if (notifyMode === 'hourly_digest') {
-    return `Résumé horaire ISO Watcher — ${releases.length} version(s)`;
+    return `Résumé horaire ISO Watcher - ${releases.length} version(s)`;
   }
 
   if (notifyMode === 'daily_digest') {
-    return `Résumé quotidien ISO Watcher — ${releases.length} version(s)`;
+    return `Résumé quotidien ISO Watcher - ${releases.length} version(s)`;
   }
 
   if (releases.length === 1) {
@@ -3592,11 +3592,11 @@ function buildDigestIntro(notifyMode, releaseCount, isTest = false) {
   }
 
   if (notifyMode === 'hourly_digest') {
-    return `<p><strong>Résumé horaire</strong> — ${releaseCount} nouvelle(s) version(s) détectée(s) depuis la dernière heure.</p>`;
+    return `<p><strong>Résumé horaire</strong> - ${releaseCount} nouvelle(s) version(s) détectée(s) depuis la dernière heure.</p>`;
   }
 
   if (notifyMode === 'daily_digest') {
-    return `<p><strong>Résumé quotidien</strong> — ${releaseCount} nouvelle(s) version(s) détectée(s) depuis le dernier envoi.</p>`;
+    return `<p><strong>Résumé quotidien</strong> - ${releaseCount} nouvelle(s) version(s) détectée(s) depuis le dernier envoi.</p>`;
   }
 
   return `<p>ISO Watcher a détecté ${releaseCount} nouvelle(s) version(s).</p>`;
@@ -3645,7 +3645,7 @@ function formatFileSize(bytes) {
   const value = Number(bytes);
 
   if (!Number.isFinite(value) || value < 1) {
-    return '—';
+    return '-';
   }
 
   const units = ['o', 'Ko', 'Mo', 'Go', 'To'];
