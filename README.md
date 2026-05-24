@@ -1,6 +1,6 @@
 # ISO Watcher
 
-Surveillance automatique de releases ISO (miroirs HTTP/FTP) : détection, API REST, notifications (e-mail, Discord, Teams, webhooks) et stockage local optionnel.
+Surveillance automatique de releases ISO (miroirs HTTP/FTP) : détection, API REST, notifications (e-mail, Discord, Teams, Slack, Telegram, ntfy, Pushover, Matrix, webhooks) et stockage local optionnel.
 
 | | |
 |---|---|
@@ -56,7 +56,7 @@ Fichier obligatoire avant tout démarrage : **`.env`** (copié depuis [`.env.exa
 
 Secret **obligatoire** au démarrage. Il reste dans le fichier **`.env` sur le serveur**. Utilisez le **même** token côté intranet PHP ou atre pour les appels API.
 
-1. Ouvrez le générateur en ligne : [IT Tools — Token generator](https://it-tools.tech/token-generator)
+1. Ouvrez le générateur en ligne : [IT Tools - Token generator](https://it-tools.tech/token-generator)
 2. Générez un token (longueur conseillée : **64 caractères** ou plus)
 3. Collez-le dans `.env` :
 
@@ -64,7 +64,7 @@ Secret **obligatoire** au démarrage. Il reste dans le fichier **`.env` sur le s
 INTRANET_SHARED_TOKEN=
 ```
 
-> Le script [`install.sh`](scripts/install.sh) peut aussi générer un token automatiquement à l’installation. Ne commitez jamais `.env`.
+> Le script [`install.sh`](scripts/install.sh) peut aussi générer un token automatiquement à l’installation. Ne commitez jamais `.env` dans le cas où vous effectuez un fork du projet.
 
 ## Choisir une installation
 
@@ -259,7 +259,7 @@ systemctl restart iso-watcher   # après modification de .env
 
 ## Configuration
 
-Toutes les variables sont documentées dans [`.env.example`](.env.example).
+Toutes les variables sont documentées dans [`.env.example`](.env.example). Ne commitez **jamais** `.env` dans le cas où vous effectuez un fork du projet.
 
 | Groupe | Variables clés |
 |--------|------------------|
@@ -270,8 +270,9 @@ Toutes les variables sont documentées dans [`.env.example`](.env.example).
 | Stockage ISO | `STORAGE_*` |
 | Scans planifiés | `SCHEDULER_*`, `SCAN_STARTUP_RECOVERY` |
 | Logs de scan | `SCAN_MAX_LOG_LINES`, `SCAN_LOG_*` (voir section dédiée) |
-| Liens morts / rapports admin | `LINK_CHECK_*`, `ADMIN_NOTIFY_CHANNELS`, `ADMIN_EMAIL`, `ADMIN_DISCORD_WEBHOOK_URL`, … |
-| Notifications | `SMTP_*`, `DELIVERY_CRON`, `DISCORD_*`, `TEAMS_*` |
+| Liens morts / rapports admin | `LINK_CHECK_*`, `ADMIN_NOTIFY_CHANNELS`, `ADMIN_EMAIL`, webhooks admin (`ADMIN_DISCORD_*`, `ADMIN_SLACK_*`, `ADMIN_TELEGRAM_*`, `ADMIN_NTFY_*`, …) |
+| Notifications utilisateurs | API `POST /users/:id/destinations` - types via `GET /destination-types` (e-mail, Slack, Telegram, ntfy, …) |
+| Livraisons | `SMTP_*`, `DELIVERY_CRON`, `DISCORD_*`, `TEAMS_*` |
 
 ## Fonctionnalités
 

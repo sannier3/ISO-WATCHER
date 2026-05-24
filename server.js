@@ -28,6 +28,14 @@ import {
 import { createUiSessionStore, assertPrivateNetwork, getClientIp } from './lib/ui-session.js';
 import { createPresetsService } from './lib/presets.js';
 import { createAdminNotify } from './lib/admin-notify.js';
+import {
+  DESTINATION_TYPES,
+  sendDestinationPush,
+  validateDestinationPayload,
+  maskDestinationTarget,
+  buildReleasePlainText,
+  buildReleaseNotificationTitle
+} from './lib/notify-channels.js';
 
 /** Sous-dossiers à explorer quand discovery_regex est vide (exclut . et ..). */
 const DEFAULT_DISCOVERY_REGEX = '^[^./][^/]+/$';
@@ -595,12 +603,7 @@ function registerRoutes() {
     return storage.getStorageStatus();
   });
 
-  app.get('/api/v1/destination-types', async () => [
-    { type: 'email', name: 'Email HTML', supports_grouping: true },
-    { type: 'discord_webhook', name: 'Discord Webhook', supports_embeds: true, supports_grouping: true },
-    { type: 'teams_webhook', name: 'Microsoft Teams Workflow Webhook', supports_adaptive_cards: true, supports_grouping: true },
-    { type: 'generic_webhook', name: 'Webhook générique JSON', supports_grouping: true }
-  ]);
+  app.get('/api/v1/destination-types', async () => DESTINATION_TYPES);
 
   app.post('/api/v1/users/upsert', async (request) => {
     return upsertUser({ ...request.body, created_by_username: request.actor.username });
@@ -652,6 +655,18 @@ function registerRoutes() {
 
     try {
       return await presetsService.listPresets({ q: request.query.q, tag: request.query.tag });
+    } catch (err) {
+      return replyPresetError(reply, err);
+    }
+  });
+
+  app.get('/api/v1/presets/drift-updates', async (request, reply) => {
+    if (!isAdminActor(request)) {
+      return reply.code(403).send({ error: 'admin_required' });
+    }
+
+    try {
+      return await presetsService.listPresetDriftUpdates();
     } catch (err) {
       return replyPresetError(reply, err);
     }
@@ -782,12 +797,13 @@ function registerRoutes() {
 
       for (const row of rows) {
         const item = { ...row };
+        const drift = await presetsService.getDriftForIsoItem(row);
 
-        if (row.catalog_preset_id) {
-          const drift = await presetsService.getDriftForIsoItem(row);
+        if (drift) {
           item.catalog_drift = drift;
-          item.catalog_update_available = Boolean(drift?.update_available);
-          item.catalog_drift_summary = drift?.summary || null;
+          item.catalog_update_available = Boolean(drift.content_drift);
+          item.catalog_linking_recommended = Boolean(drift.linking_recommended);
+          item.catalog_drift_summary = drift.summary || null;
         }
 
         enriched.push(item);
@@ -1254,6 +1270,12 @@ function registerRoutes() {
     if (!(await assertPublicOwnsUserId(request, reply, request.params.userId))) return;
 
     const body = request.body;
+
+    try {
+      validateDestinationPayload(body.destination_type, body.target, body.config || {});
+    } catch (error) {
+      return reply.code(400).send({ error: 'invalid_destination', message: String(error.message || error) });
+    }
 
     const [result] = await pool.query(
       `INSERT INTO destinations (user_id, destination_type, label, target, enabled, config)
@@ -3111,25 +3133,7 @@ function logNotificationEvent(notificationEvent, fields = {}) {
 }
 
 function maskTargetForLog(destination) {
-  const target = String(destination?.target || '');
-
-  if (destination?.destination_type === 'email') {
-    const [local, domain] = target.split('@');
-
-    if (!domain) return '***';
-
-    const maskedLocal = local.length <= 2 ? '***' : `${local.slice(0, 2)}***`;
-
-    return `${maskedLocal}@${domain}`;
-  }
-
-  try {
-    const parsed = new URL(target);
-
-    return `${parsed.protocol}//${parsed.host}/***`;
-  } catch {
-    return truncate(target, 48);
-  }
+  return maskDestinationTarget(destination);
 }
 
 function truncateResponseBody(body, maxLength = 2000) {
@@ -3466,6 +3470,10 @@ async function sendReleasesToDestination(destination, releases, options = {}) {
 
   if (destination.destination_type === 'generic_webhook') {
     return sendGenericWebhookDestination(destination, releases, { notifyMode, isTest });
+  }
+
+  if (['slack_webhook', 'telegram', 'ntfy', 'pushover', 'matrix'].includes(destination.destination_type)) {
+    return sendDestinationPush(destination, releases, { notifyMode, isTest });
   }
 
   throw new Error(`Destination inconnue : ${destination.destination_type}`);
@@ -3810,6 +3818,14 @@ function buildPreview(destinationType, releases) {
     return {
       type: 'teams_webhook',
       payloads: chunkTeamsCards(releases)
+    };
+  }
+
+  if (['slack_webhook', 'telegram', 'ntfy', 'pushover', 'matrix'].includes(destinationType)) {
+    return {
+      type: destinationType,
+      title: buildReleaseNotificationTitle(releases),
+      text: buildReleasePlainText(releases)
     };
   }
 
