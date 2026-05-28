@@ -1,5 +1,7 @@
 # API ISO Watcher - Référence complète
 
+[![Français](https://img.shields.io/badge/lang-Français-blue.svg)](API.md) [![English](https://img.shields.io/badge/lang-English-lightgrey.svg)](API.en.md) [![License](https://img.shields.io/badge/License-MIT-success?style=flat-square)](../LICENSE)
+
 **Version API** : `0.2.0`  
 **Base URL** : `http://<hôte>:<port>` (défaut `http://127.0.0.1:3088`)
 

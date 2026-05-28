@@ -1,5 +1,7 @@
 # ISO Watcher
 
+[![Français](https://img.shields.io/badge/lang-Français-blue.svg)](README.md) [![English](https://img.shields.io/badge/lang-English-lightgrey.svg)](README.en.md) [![License](https://img.shields.io/badge/License-MIT-success?style=flat-square)](LICENSE)
+
 Surveillance automatique de releases ISO (miroirs HTTP/FTP) : détection, API REST, notifications (e-mail, Discord, Teams, Slack, webhooks) et stockage local optionnel.
 
 | | |
@@ -251,10 +253,11 @@ systemctl restart iso-watcher   # après modification de .env
 
 | URL | Rôle |
 |-----|------|
-| `/` | Catalogue public, santé, actions optionnelles |
-| `/admin` | Console : ISO, sources, scans, releases, notifications, stockage |
+| `/` | Catalogue public, santé, actions optionnelles (interface FR/EN) |
+| `/admin` | Console : ISO, sources, scans, releases, notifications, stockage (interface FR/EN) |
 | `/docs` | Documentation API (HTML) |
-| `/docs/API.md` | Référence API (Markdown) |
+| `/docs/API.md` | Référence API (Markdown, français) |
+| `/docs/API.en.md` | Référence API (Markdown, anglais) |
 | `/health` | Santé JSON (sans auth) |
 
 ## Configuration
@@ -368,8 +371,11 @@ iso-watcher/
 
 | Document | Contenu |
 |----------|---------|
-| [docs/API.md](docs/API.md) | Référence API complète |
+| [docs/API.md](docs/API.md) | Référence API complète (français) |
+| [docs/API.en.md](docs/API.en.md) | Référence API complète (anglais) |
+| [README.en.md](README.en.md) | Ce guide en anglais |
 | [SECURITY.md](SECURITY.md) | Auth, UI, réseau, checklist déploiement |
+| [SECURITY.en.md](SECURITY.en.md) | Même contenu en anglais |
 | [.env.example](.env.example) | Toutes les variables d’environnement |
 
 Intégration **PHP** ou autre client HTTP : possible via l’API ; le service Node.js reste **autonome** (aucun PHP requis).

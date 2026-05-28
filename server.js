@@ -241,6 +241,12 @@ if (config.publicUiEnabled) {
       .sendFile('API.md', path.join(__dirname, 'docs'));
   });
 
+  app.get('/docs/API.en.md', async (_request, reply) => {
+    return reply
+      .type('text/markdown; charset=utf-8')
+      .sendFile('API.en.md', path.join(__dirname, 'docs'));
+  });
+
   if (config.adminUi.enabled) {
     await app.register(fastifyStatic, {
       root: path.join(__dirname, 'public', 'admin'),

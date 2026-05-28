@@ -22,28 +22,34 @@ const state = {
     deliveries: [],
     storageTracked: []
   },
-  presetsList: []
+  presetsList: [],
+  presetsSelectedIds: new Set()
 };
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+const t = (key, vars) => window.IW_I18N?.t(key, vars) ?? key;
+const localeTag = () => (window.IW_I18N?.getLocale() === 'en' ? 'en-GB' : 'fr-FR');
 
-const TAB_TITLES = {
-  dashboard: ['Tableau de bord', "Vue d'ensemble du service"],
-  iso: ['ISO & sources', 'Gérez les images et leurs sources de téléchargement'],
-  releases: ['Releases', 'Historique des fichiers détectés'],
-  scans: ['Scans', 'Exécution et suivi des analyses'],
-  storage: ['Stockage', 'Téléchargements locaux et file d\'attente'],
-  notifications: ['Notifications', 'Événements et livraisons'],
-  reports: ['Rapports admin', 'Vérification des liens, historique et diffusion'],
-  users: ['Utilisateurs', 'Comptes, destinations et abonnements'],
-  system: ['Système', 'Santé, configuration et tests']
-};
+function tabTitles() {
+  return {
+    dashboard: [t('tab.dashboard'), t('tab.dashboard_sub')],
+    iso: [t('tab.iso'), t('tab.iso_sub')],
+    releases: [t('tab.releases'), t('tab.releases_sub')],
+    scans: [t('tab.scans'), t('tab.scans_sub')],
+    storage: [t('tab.storage'), t('tab.storage_sub')],
+    notifications: [t('tab.notifications'), t('tab.notifications_sub')],
+    reports: [t('tab.reports'), t('tab.reports_sub')],
+    users: [t('tab.users'), t('tab.users_sub')],
+    system: [t('tab.system'), t('tab.system_sub')]
+  };
+}
 
-const REPORT_TYPE_LABELS = {
-  link_check: 'Vérification des liens',
-  new_releases: 'Nouvelles ISO (admin)'
-};
+function reportTypeLabel(type) {
+  const key = `report.type.${type}`;
+  const label = t(key);
+  return label === key ? type : label;
+}
 
 function escapeHtml(s) {
   return String(s ?? '')
@@ -59,7 +65,7 @@ const FETCH_CREDENTIALS = { credentials: 'include' };
 function formatBytes(n) {
   const v = Number(n);
   if (!v || v < 1) return '-';
-  const u = ['o', 'Ko', 'Mo', 'Go', 'To'];
+  const u = [t('bytes.B'), t('bytes.KB'), t('bytes.MB'), t('bytes.GB'), t('bytes.TB')];
   let x = v;
   let i = 0;
   while (x >= 1024 && i < u.length - 1) {
@@ -97,9 +103,9 @@ function renderPaginationBar(container, meta, onPageChange) {
 
   container.innerHTML = `
     <div class="pagination">
-      <button type="button" class="btn btn-secondary btn-sm" data-page="prev" ${prevDisabled ? 'disabled' : ''}>Précédent</button>
-      <span class="pagination-info">Page ${meta.page} / ${meta.totalPages} · ${meta.total} élément(s)</span>
-      <button type="button" class="btn btn-secondary btn-sm" data-page="next" ${nextDisabled ? 'disabled' : ''}>Suivant</button>
+      <button type="button" class="btn btn-secondary btn-sm" data-page="prev" ${prevDisabled ? 'disabled' : ''}>${escapeHtml(t('common.prev'))}</button>
+      <span class="pagination-info">${escapeHtml(t('common.page', { page: meta.page, totalPages: meta.totalPages, total: meta.total }))}</span>
+      <button type="button" class="btn btn-secondary btn-sm" data-page="next" ${nextDisabled ? 'disabled' : ''}>${escapeHtml(t('common.next'))}</button>
     </div>`;
 
   container.querySelector('[data-page="prev"]')?.addEventListener('click', () => {
@@ -111,7 +117,7 @@ function renderPaginationBar(container, meta, onPageChange) {
   });
 }
 
-function boolBadge(value, onLabel = 'oui', offLabel = 'non') {
+function boolBadge(value, onLabel = t('common.yes'), offLabel = t('common.no')) {
   return value
     ? `<span class="badge badge-ok">${onLabel}</span>`
     : `<span class="badge badge-muted">${offLabel}</span>`;
@@ -122,26 +128,26 @@ function renderSourceFormHtml(source, { formId, isoId, submitLabel }) {
 
   return `
     <form id="${formId}" class="form-grid source-edit-form" data-iso-id="${isoId}" ${source?.id ? `data-source-id="${source.id}"` : ''}>
-      <label class="field"><span>Nom *</span><input name="name" required value="${escapeHtml(s.name || '')}"></label>
-      <label class="field field-span"><span>URL *</span><input name="url" type="url" required value="${escapeHtml(s.url || '')}"></label>
-      <label class="field"><span>Protocole</span>
+      <label class="field"><span>${escapeHtml(t('source.name'))}</span><input name="name" required value="${escapeHtml(s.name || '')}"></label>
+      <label class="field field-span"><span>${escapeHtml(t('source.url'))}</span><input name="url" type="url" required value="${escapeHtml(s.url || '')}"></label>
+      <label class="field"><span>${escapeHtml(t('source.protocol'))}</span>
         <select name="protocol">
           ${['https', 'http', 'ftp'].map((p) => `<option value="${p}" ${(s.protocol || 'https') === p ? 'selected' : ''}>${p}</option>`).join('')}
         </select>
       </label>
-      <label class="field"><span>Priorité</span><input type="number" name="priority" min="1" max="9999" value="${escapeHtml(s.priority ?? 100)}"></label>
-      <label class="field field-span"><span>Regex fichier *</span><input name="match_regex" required value="${escapeHtml(s.match_regex || '')}"></label>
-      <label class="field field-span"><span>Regex version</span><input name="version_regex" value="${escapeHtml(s.version_regex || '')}"></label>
-      <label class="field field-span"><span>Regex checksum</span><input name="checksum_regex" value="${escapeHtml(s.checksum_regex || '')}"></label>
-      <label class="field field-check"><input type="checkbox" name="discovery_enabled" value="1" ${s.discovery_enabled ? 'checked' : ''}> Découverte automatique</label>
-      <label class="field"><span>Profondeur découverte</span><input type="number" name="discovery_depth" min="1" max="6" value="${escapeHtml(s.discovery_depth ?? 1)}"></label>
-      <label class="field field-span"><span>Regex dossiers</span><input name="discovery_regex" value="${escapeHtml(s.discovery_regex || '')}" placeholder="^[^./][^/]+/$"></label>
-      <label class="field field-check"><input type="checkbox" name="allow_insecure_tls" value="1" ${s.allow_insecure_tls ? 'checked' : ''}> TLS non vérifié (HTTP)</label>
-      <label class="field field-check"><input type="checkbox" name="ftp_passive" value="1" ${s.ftp_passive !== false && s.ftp_passive !== 0 ? 'checked' : ''}> FTP passif</label>
-      <label class="field field-check"><input type="checkbox" name="enabled" value="1" ${s.enabled !== false && s.enabled !== 0 ? 'checked' : ''}> Source activée</label>
+      <label class="field"><span>${escapeHtml(t('source.priority'))}</span><input type="number" name="priority" min="1" max="9999" value="${escapeHtml(s.priority ?? 100)}"></label>
+      <label class="field field-span"><span>${escapeHtml(t('source.match_regex'))}</span><input name="match_regex" required value="${escapeHtml(s.match_regex || '')}"></label>
+      <label class="field field-span"><span>${escapeHtml(t('source.version_regex'))}</span><input name="version_regex" value="${escapeHtml(s.version_regex || '')}"></label>
+      <label class="field field-span"><span>${escapeHtml(t('source.checksum_regex'))}</span><input name="checksum_regex" value="${escapeHtml(s.checksum_regex || '')}"></label>
+      <label class="field field-check"><input type="checkbox" name="discovery_enabled" value="1" ${s.discovery_enabled ? 'checked' : ''}> ${escapeHtml(t('source.discovery_auto'))}</label>
+      <label class="field"><span>${escapeHtml(t('source.discovery_depth'))}</span><input type="number" name="discovery_depth" min="1" max="6" value="${escapeHtml(s.discovery_depth ?? 1)}"></label>
+      <label class="field field-span"><span>${escapeHtml(t('source.discovery_regex'))}</span><input name="discovery_regex" value="${escapeHtml(s.discovery_regex || '')}" placeholder="^[^./][^/]+/$"></label>
+      <label class="field field-check"><input type="checkbox" name="allow_insecure_tls" value="1" ${s.allow_insecure_tls ? 'checked' : ''}> ${escapeHtml(t('source.tls_insecure'))}</label>
+      <label class="field field-check"><input type="checkbox" name="ftp_passive" value="1" ${s.ftp_passive !== false && s.ftp_passive !== 0 ? 'checked' : ''}> ${escapeHtml(t('source.ftp_passive'))}</label>
+      <label class="field field-check"><input type="checkbox" name="enabled" value="1" ${s.enabled !== false && s.enabled !== 0 ? 'checked' : ''}> ${escapeHtml(t('source.enabled'))}</label>
       <div class="field-span form-actions">
         <button type="submit" class="btn btn-primary btn-sm">${escapeHtml(submitLabel)}</button>
-        ${source?.id ? `<button type="button" class="btn btn-ghost btn-sm" data-cancel-edit="${source.id}">Annuler</button>` : ''}
+        ${source?.id ? `<button type="button" class="btn btn-ghost btn-sm" data-cancel-edit="${source.id}">${escapeHtml(t('source.cancel'))}</button>` : ''}
       </div>
     </form>`;
 }
@@ -149,22 +155,22 @@ function renderSourceFormHtml(source, { formId, isoId, submitLabel }) {
 function renderSourceReadonlyHtml(s) {
   return `
     <dl class="source-detail-grid">
-      <div><dt>ID</dt><dd>#${s.id}</dd></div>
-      <div><dt>Protocole</dt><dd>${escapeHtml(s.protocol || '-')}</dd></div>
-      <div><dt>Priorité</dt><dd>${escapeHtml(s.priority ?? '-')}</dd></div>
-      <div><dt>Activée</dt><dd>${boolBadge(s.enabled, 'on', 'off')}</dd></div>
-      <div class="source-detail-wide"><dt>URL</dt><dd><code class="break-all">${escapeHtml(s.url || '')}</code></dd></div>
-      <div class="source-detail-wide"><dt>Regex fichier</dt><dd><code class="break-all">${escapeHtml(s.match_regex || '')}</code></dd></div>
-      <div class="source-detail-wide"><dt>Regex version</dt><dd><code class="break-all">${escapeHtml(s.version_regex || '-')}</code></dd></div>
-      <div class="source-detail-wide"><dt>Regex checksum</dt><dd><code class="break-all">${escapeHtml(s.checksum_regex || '-')}</code></dd></div>
-      <div><dt>Découverte</dt><dd>${boolBadge(s.discovery_enabled)}</dd></div>
-      <div><dt>Profondeur</dt><dd>${escapeHtml(s.discovery_depth ?? '-')}</dd></div>
-      <div class="source-detail-wide"><dt>Regex dossiers</dt><dd><code class="break-all">${escapeHtml(s.discovery_regex || '-')}</code></dd></div>
+      <div><dt>${escapeHtml(t('source.id'))}</dt><dd>#${s.id}</dd></div>
+      <div><dt>${escapeHtml(t('source.protocol'))}</dt><dd>${escapeHtml(s.protocol || '-')}</dd></div>
+      <div><dt>${escapeHtml(t('source.priority'))}</dt><dd>${escapeHtml(s.priority ?? '-')}</dd></div>
+      <div><dt>${escapeHtml(t('source.active'))}</dt><dd>${boolBadge(s.enabled, t('common.on'), t('common.off'))}</dd></div>
+      <div class="source-detail-wide"><dt>${escapeHtml(t('source.url').replace(' *', ''))}</dt><dd><code class="break-all">${escapeHtml(s.url || '')}</code></dd></div>
+      <div class="source-detail-wide"><dt>${escapeHtml(t('source.match_regex').replace(' *', ''))}</dt><dd><code class="break-all">${escapeHtml(s.match_regex || '')}</code></dd></div>
+      <div class="source-detail-wide"><dt>${escapeHtml(t('source.version_regex'))}</dt><dd><code class="break-all">${escapeHtml(s.version_regex || '-')}</code></dd></div>
+      <div class="source-detail-wide"><dt>${escapeHtml(t('source.checksum_regex'))}</dt><dd><code class="break-all">${escapeHtml(s.checksum_regex || '-')}</code></dd></div>
+      <div><dt>${escapeHtml(t('source.discovery'))}</dt><dd>${boolBadge(s.discovery_enabled)}</dd></div>
+      <div><dt>${escapeHtml(t('source.depth'))}</dt><dd>${escapeHtml(s.discovery_depth ?? '-')}</dd></div>
+      <div class="source-detail-wide"><dt>${escapeHtml(t('source.folder_regex'))}</dt><dd><code class="break-all">${escapeHtml(s.discovery_regex || '-')}</code></dd></div>
       <div><dt>TLS insecure</dt><dd>${boolBadge(s.allow_insecure_tls)}</dd></div>
-      <div><dt>FTP passif</dt><dd>${boolBadge(s.ftp_passive !== false && s.ftp_passive !== 0)}</dd></div>
-      <div><dt>Dernière vérif.</dt><dd>${escapeHtml(s.last_checked_at || '-')}</dd></div>
-      <div><dt>Dernier scan</dt><dd>${escapeHtml(s.last_scan_at || '-')}</dd></div>
-      <div><dt>Origine</dt><dd>${escapeHtml(s.catalog_source || 'manuel')}${s.catalog_preset_id ? ` · ${escapeHtml(s.catalog_preset_id)}` : ''}${s.catalog_source_key ? ` / ${escapeHtml(s.catalog_source_key)}` : ''}</dd></div>
+      <div><dt>${escapeHtml(t('source.ftp_passive'))}</dt><dd>${boolBadge(s.ftp_passive !== false && s.ftp_passive !== 0)}</dd></div>
+      <div><dt>${escapeHtml(t('source.last_check'))}</dt><dd>${escapeHtml(s.last_checked_at || '-')}</dd></div>
+      <div><dt>${escapeHtml(t('source.last_scan'))}</dt><dd>${escapeHtml(s.last_scan_at || '-')}</dd></div>
+      <div><dt>${escapeHtml(t('source.origin'))}</dt><dd>${escapeHtml(s.catalog_source || t('common.manual'))}${s.catalog_preset_id ? ` · ${escapeHtml(s.catalog_preset_id)}` : ''}${s.catalog_source_key ? ` / ${escapeHtml(s.catalog_source_key)}` : ''}</dd></div>
     </dl>`;
 }
 
@@ -199,11 +205,11 @@ function bindSourceForm(form, isoId, { onSuccess } = {}) {
     try {
       if (sourceId) {
         await api('PATCH', `/sources/${sourceId}`, payload);
-        toast('Source mise à jour', 'success');
+        toast(t('toast.source_updated'), 'success');
         state.editingSourceId = null;
       } else {
         await api('POST', `/iso-items/${isoId}/sources`, payload);
-        toast('Source ajoutée', 'success');
+        toast(t('toast.source_added'), 'success');
         form.reset();
         form.hidden = true;
       }
@@ -224,25 +230,27 @@ function bindSourceForm(form, isoId, { onSuccess } = {}) {
 function dlStatusBadge(status) {
   const s = String(status || 'none');
   const map = {
-    none: ['badge-muted', 'Non stocké'],
-    downloading: ['badge-warn', 'En cours'],
-    completed: ['badge-ok', 'Local'],
-    failed: ['badge-error', 'Échec'],
-    replaced: ['badge-muted', 'Remplacé']
+    none: ['badge-muted', 'dl.none'],
+    downloading: ['badge-warn', 'dl.downloading'],
+    completed: ['badge-ok', 'dl.completed'],
+    failed: ['badge-error', 'dl.failed'],
+    replaced: ['badge-muted', 'dl.replaced']
   };
-  const [cls, label] = map[s] || ['badge-muted', s];
+  const [cls, key] = map[s] || ['badge-muted', null];
+  const label = key ? t(key) : s;
   return `<span class="badge ${cls}">${escapeHtml(label)}</span>`;
 }
 
 function scanStatusBadge(status) {
   const map = {
-    running: ['badge-warn', 'En cours'],
-    success: ['badge-ok', 'OK'],
-    error: ['badge-error', 'Erreur'],
-    partial_error: ['badge-warn', 'Partiel'],
-    interrupted: ['badge-muted', 'Interrompu']
+    running: ['badge-warn', 'scan.running'],
+    success: ['badge-ok', 'scan.success'],
+    error: ['badge-error', 'scan.error'],
+    partial_error: ['badge-warn', 'scan.partial_error'],
+    interrupted: ['badge-muted', 'scan.interrupted']
   };
-  const [cls, label] = map[status] || ['badge-muted', status || '-'];
+  const [cls, key] = map[status] || ['badge-muted', null];
+  const label = key ? t(key) : (status || '-');
   return `<span class="badge ${cls}">${escapeHtml(label)}</span>`;
 }
 
@@ -312,7 +320,7 @@ async function api(method, path, body = null) {
     try {
       data = JSON.parse(text);
     } catch {
-      throw new Error('Réponse JSON invalide');
+      throw new Error(t('toast.invalid_json'));
     }
   }
   if (!res.ok) {
@@ -334,7 +342,7 @@ function extractApiError(data, status) {
   }
 
   if (code === 'too_many_attempts' || code === 'rate_limit_exceeded') {
-    return 'Trop de tentatives. Réessayez plus tard.';
+    return t('toast.too_many_attempts');
   }
 
   return code || message || `HTTP ${status}`;
@@ -365,7 +373,7 @@ async function initAuth() {
   state.uiConfig = cfg;
 
   if (!cfg.admin_ui_enabled) {
-    $('#login-hint').textContent = 'Interface admin désactivée (ADMIN_UI_ENABLED=false).';
+    $('#login-hint').textContent = t('admin.ui_disabled');
     showLoginScreen();
     return;
   }
@@ -398,7 +406,7 @@ async function initAuth() {
   showLoginScreen();
   pwWrap.hidden = false;
   $('#login-password').required = true;
-  hint.textContent = 'Mot de passe administrateur requis (ADMIN_UI_AUTH_REQUIRED=true).';
+  hint.textContent = t('admin.password_required');
 }
 
 async function doLogin(password) {
@@ -412,8 +420,8 @@ async function doLogin(password) {
   } catch (e) {
     showLoginScreen();
     const msg = e.message === 'too_many_attempts'
-      ? 'Trop de tentatives. Réessayez plus tard.'
-      : (e.message || 'Connexion refusée');
+      ? t('toast.too_many_attempts')
+      : (e.message || t('admin.login_denied'));
     errEl.textContent = msg;
     errEl.hidden = false;
   }
@@ -443,7 +451,7 @@ function switchTab(tab) {
   state.activeTab = tab;
   $$('.nav-item').forEach((btn) => btn.classList.toggle('is-active', btn.dataset.tab === tab));
   $$('.tab-panel').forEach((p) => p.classList.toggle('is-active', p.dataset.panel === tab));
-  const [title, sub] = TAB_TITLES[tab] || ['', ''];
+  const [title, sub] = tabTitles()[tab] || ['', ''];
   $('#page-title').textContent = title;
   $('#page-subtitle').textContent = sub;
   refreshTab(tab);
@@ -470,10 +478,10 @@ async function refreshAll() {
   try {
     const h = await fetch('/health').then((r) => r.json());
     const pill = $('#health-pill');
-    pill.textContent = h.ok ? `OK · ${h.db_driver}` : 'Erreur';
+    pill.textContent = h.ok ? `OK · ${h.db_driver}` : t('common.error');
     pill.className = 'pill ' + (h.ok ? 'ok' : 'err');
   } catch {
-    $('#health-pill').textContent = 'Hors ligne';
+    $('#health-pill').textContent = t('common.offline');
     $('#health-pill').className = 'pill err';
   }
 }
@@ -485,25 +493,25 @@ async function loadDashboard() {
   $('#dashboard-stats').innerHTML = `
     <div class="stat-card"><span>ISO</span><strong>${c.iso_items ?? 0}</strong></div>
     <div class="stat-card"><span>Releases</span><strong>${c.releases ?? 0}</strong></div>
-    <div class="stat-card"><span>Utilisateurs</span><strong>${c.users ?? 0}</strong></div>
-    <div class="stat-card"><span>BDD</span><strong>${escapeHtml(data.db_driver)}</strong></div>
+    <div class="stat-card"><span>${escapeHtml(t('dashboard.users'))}</span><strong>${c.users ?? 0}</strong></div>
+    <div class="stat-card"><span>${escapeHtml(t('dashboard.db'))}</span><strong>${escapeHtml(data.db_driver)}</strong></div>
   `;
 
   const scans = data.recent_scans || [];
   $('#dashboard-scans').innerHTML = scans.length
-    ? `<table class="data-table"><thead><tr><th>ID</th><th>Statut</th><th>Nouv.</th><th>Début</th></tr></thead><tbody>
+    ? `<table class="data-table"><thead><tr><th>${escapeHtml(t('dashboard.col.id'))}</th><th>${escapeHtml(t('dashboard.col.status'))}</th><th>${escapeHtml(t('dashboard.col.new'))}</th><th>${escapeHtml(t('dashboard.col.start'))}</th></tr></thead><tbody>
       ${scans.map((s) => `<tr><td>#${s.id}</td><td>${scanStatusBadge(s.status)}</td><td>${s.new_releases ?? 0}</td><td>${escapeHtml(s.started_at)}</td></tr>`).join('')}
     </tbody></table>`
-    : '<p class="empty">Aucun scan.</p>';
+    : `<p class="empty">${escapeHtml(t('dashboard.no_scans'))}</p>`;
 
   const st = data.storage || {};
   const counts = st.counts || {};
   $('#dashboard-storage').innerHTML = `
-    <p>${st.enabled ? '<span class="badge badge-ok">Actif</span>' : '<span class="badge badge-muted">Désactivé</span>'}</p>
+    <p>${st.enabled ? `<span class="badge badge-ok">${escapeHtml(t('badge.active'))}</span>` : `<span class="badge badge-muted">${escapeHtml(t('badge.disabled'))}</span>`}</p>
     <p class="hint" style="margin-top:0.75rem">
-      ${counts.downloading ?? 0} en cours · ${counts.completed ?? 0} local · ${counts.failed ?? 0} échec(s)
+      ${escapeHtml(t('dashboard.storage_counts', { downloading: counts.downloading ?? 0, completed: counts.completed ?? 0, failed: counts.failed ?? 0 }))}
     </p>
-    <p class="hint">Planificateur : ${data.config?.scheduler_enabled ? 'oui' : 'non'} (${escapeHtml(data.config?.scheduler_cron || '')})</p>
+    <p class="hint">${escapeHtml(t('dashboard.scheduler', { enabled: data.config?.scheduler_enabled ? t('common.yes') : t('common.no'), cron: data.config?.scheduler_cron || '' }))}</p>
   `;
 }
 
@@ -547,7 +555,7 @@ function applyNotifyConfigToForm(cfg) {
 function formatNotifyResults(results) {
   if (!results || typeof results !== 'object') return '-';
   return Object.entries(results)
-    .map(([ch, r]) => `${ch}: ${r?.ok ? 'OK' : (r?.error || 'échec')}`)
+    .map(([ch, r]) => `${ch}: ${r?.ok ? t('common.ok') : (r?.error || t('report.notify_failed'))}`)
     .join(' · ');
 }
 
@@ -570,32 +578,32 @@ async function loadReportsList(selectId) {
   const host = $('#reports-list');
   if (!host) return;
 
-  host.innerHTML = '<p class="empty">Chargement…</p>';
+  host.innerHTML = `<p class="empty">${escapeHtml(t('common.loading'))}</p>`;
 
   try {
     const data = await api('GET', '/admin/reports?limit=25');
     const reports = data.reports || [];
 
     if (!reports.length) {
-      host.innerHTML = '<p class="empty">Aucun rapport enregistré.</p>';
+      host.innerHTML = `<p class="empty">${escapeHtml(t('report.empty'))}</p>`;
       return;
     }
 
     host.innerHTML = `<table class="data-table">
-      <thead><tr><th>Date</th><th>Type</th><th>Résumé</th><th>Canaux</th><th></th></tr></thead>
+      <thead><tr><th>${escapeHtml(t('report.col.date'))}</th><th>${escapeHtml(t('report.col.type'))}</th><th>${escapeHtml(t('report.col.summary'))}</th><th>${escapeHtml(t('report.col.channels'))}</th><th></th></tr></thead>
       <tbody>${reports.map((r) => {
         const summary = r.type === 'link_check' && r.stats
-          ? `${r.stats.checked} vérifiées, ${r.stats.removed} retirées`
-          : (r.release_count != null ? `${r.release_count} release(s)` : '-');
+          ? t('report.summary.link_check', { checked: r.stats.checked, removed: r.stats.removed })
+          : (r.release_count != null ? t('report.summary.releases', { count: r.release_count }) : '-');
         const date = r.created_at
-          ? new Date(r.created_at).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })
+          ? new Date(r.created_at).toLocaleString(localeTag(), { timeZone: 'Europe/Paris' })
           : '-';
         return `<tr>
           <td>${escapeHtml(date)}</td>
-          <td>${escapeHtml(REPORT_TYPE_LABELS[r.type] || r.type)}</td>
+          <td>${escapeHtml(reportTypeLabel(r.type))}</td>
           <td>${escapeHtml(summary)}</td>
           <td class="hint">${escapeHtml((r.channels || []).join(', '))}</td>
-          <td><button type="button" class="btn btn-ghost btn-sm" data-report-view="${escapeHtml(r.id)}">Voir</button></td>
+          <td><button type="button" class="btn btn-ghost btn-sm" data-report-view="${escapeHtml(r.id)}">${escapeHtml(t('report.view'))}</button></td>
         </tr>`;
       }).join('')}</tbody>
     </table>`;
@@ -622,11 +630,11 @@ async function showReportPreview(reportId) {
 
   try {
     const report = await api('GET', `/admin/reports/${encodeURIComponent(reportId)}`);
-    meta.innerHTML = `<strong>${escapeHtml(REPORT_TYPE_LABELS[report.type] || report.type)}</strong>
+    meta.innerHTML = `<strong>${escapeHtml(reportTypeLabel(report.type))}</strong>
       · ${escapeHtml(report.created_at || '')}
       · ${escapeHtml(formatNotifyResults(report.notify_results))}`;
 
-    frame.srcdoc = report.html || '<p>Rapport sans contenu HTML.</p>';
+    frame.srcdoc = report.html || `<p>${escapeHtml(t('report.no_html'))}</p>`;
     frame.hidden = false;
     frame.removeAttribute('hidden');
     if (empty) {
@@ -678,7 +686,7 @@ async function runLinkCheckFromForm(e) {
   if (statusEl) {
     statusEl.hidden = false;
     statusEl.removeAttribute('hidden');
-    statusEl.textContent = 'Vérification en cours…';
+    statusEl.textContent = t('report.link_check_running');
   }
 
   try {
@@ -689,11 +697,15 @@ async function runLinkCheckFromForm(e) {
     });
 
     if (r.skipped) {
-      toast('Une vérification est déjà en cours', 'warn');
+      toast(t('report.link_check_skipped'), 'warn');
       return;
     }
 
-    const msg = `Terminé : ${r.checked ?? 0} analysée(s), ${r.removed ?? 0} supprimée(s), ${r.new_in_period ?? 0} nouvelle(s) sur la période.`;
+    const msg = t('report.link_check_done', {
+      checked: r.checked ?? 0,
+      removed: r.removed ?? 0,
+      newInPeriod: r.new_in_period ?? 0
+    });
     toast(msg, 'success');
 
     if (statusEl) {
@@ -718,16 +730,16 @@ async function loadPresetsMeta() {
   try {
     const meta = await api('GET', '/presets/catalog/meta');
     const parts = [
-      `${meta.preset_count ?? 0} modèle(s)`,
-      `source : ${meta.source || '-'}`,
-      meta.updated_at ? `catalogue ${meta.updated_at}` : null,
-      meta.refreshed_at ? `GitHub ${meta.refreshed_at}` : 'pas de synchro GitHub récente'
+      t('preset.models', { count: meta.preset_count ?? 0 }),
+      t('preset.source', { value: meta.source || '-' }),
+      meta.updated_at ? t('preset.catalog_at', { date: meta.updated_at }) : null,
+      meta.refreshed_at ? t('preset.github_at', { date: meta.refreshed_at }) : t('preset.no_github_sync')
     ].filter(Boolean);
 
     if (el) el.textContent = parts.join(' · ');
     return meta;
   } catch (e) {
-    if (el) el.textContent = `Catalogue indisponible : ${e.message}`;
+    if (el) el.textContent = t('preset.unavailable', { message: e.message });
     return null;
   }
 }
@@ -736,7 +748,7 @@ async function loadPresetsList() {
   const listEl = $('#presets-list');
   if (!listEl) return;
 
-  listEl.innerHTML = '<p class="empty">Chargement…</p>';
+  listEl.innerHTML = `<p class="empty">${escapeHtml(t('common.loading'))}</p>`;
 
   const q = $('#presets-search')?.value?.trim() || '';
   const tag = $('#presets-tag')?.value?.trim() || '';
@@ -750,46 +762,111 @@ async function loadPresetsList() {
     state.presetsList = Array.isArray(rows) ? rows : [];
     renderPresetsList();
   } catch (e) {
-    listEl.innerHTML = `<p class="empty">Erreur : ${escapeHtml(e.message)}</p>`;
+    listEl.innerHTML = `<p class="empty">${escapeHtml(t('preset.error', { message: e.message }))}</p>`;
+  }
+}
+
+function getVisiblePresetIds() {
+  return (state.presetsList || []).map((p) => String(p.id));
+}
+
+function getSelectedPresetIds() {
+  const visible = new Set(getVisiblePresetIds());
+  return [...state.presetsSelectedIds].filter((id) => visible.has(id));
+}
+
+function syncPresetSelectionWithList() {
+  const visible = new Set(getVisiblePresetIds());
+
+  for (const id of [...state.presetsSelectedIds]) {
+    if (!visible.has(id)) {
+      state.presetsSelectedIds.delete(id);
+    }
+  }
+}
+
+function updatePresetsBulkUi() {
+  const selectedIds = getSelectedPresetIds();
+  const visibleIds = getVisiblePresetIds();
+  const selectedVisibleCount = selectedIds.length;
+  const countEl = $('#presets-selection-count');
+  const applyBtn = $('#btn-presets-bulk-apply');
+  const selectAll = $('#presets-select-all');
+
+  if (countEl) {
+    countEl.textContent = selectedVisibleCount > 1
+      ? t('admin.presets_selected_plural', { count: selectedVisibleCount })
+      : t('admin.presets_selected', { count: selectedVisibleCount });
+  }
+
+  if (applyBtn) {
+    applyBtn.disabled = selectedVisibleCount === 0;
+  }
+
+  if (selectAll) {
+    selectAll.checked = visibleIds.length > 0 && selectedVisibleCount === visibleIds.length;
+    selectAll.indeterminate = selectedVisibleCount > 0 && selectedVisibleCount < visibleIds.length;
+    selectAll.disabled = visibleIds.length === 0;
   }
 }
 
 function renderPresetsList() {
   const listEl = $('#presets-list');
   const rows = state.presetsList || [];
+  syncPresetSelectionWithList();
 
   if (!rows.length) {
-    listEl.innerHTML = '<p class="empty">Aucun modèle trouvé.</p>';
+    listEl.innerHTML = `<p class="empty">${escapeHtml(t('preset.none'))}</p>`;
+    updatePresetsBulkUi();
     return;
   }
 
   listEl.innerHTML = rows.map((p) => {
+    const presetId = String(p.id);
     const update = Boolean(p.update_available);
     const rowClass = update ? 'preset-row preset-row--update' : 'preset-row';
+    const selected = state.presetsSelectedIds.has(presetId);
     const statusBadge = update
-      ? `<span class="badge badge-update" title="${escapeHtml(p.drift_summary || '')}">Mise à jour dispo</span>`
+      ? `<span class="badge badge-update" title="${escapeHtml(p.drift_summary || '')}">${escapeHtml(t('badge.update_available'))}</span>`
       : (p.import_status === 'up_to_date'
-        ? '<span class="badge badge-ok">à jour</span>'
-        : (p.imported ? '<span class="badge badge-ok">importé</span>' : '<span class="badge badge-muted">non importé</span>'));
+        ? `<span class="badge badge-ok">${escapeHtml(t('badge.up_to_date'))}</span>`
+        : (p.imported ? `<span class="badge badge-ok">${escapeHtml(t('badge.imported'))}</span>` : `<span class="badge badge-muted">${escapeHtml(t('badge.not_imported'))}</span>`));
 
     return `
     <div class="${rowClass}" data-preset-id="${escapeHtml(p.id)}">
+      <label class="preset-select" title="${escapeHtml(t('source.select_preset'))}">
+        <input type="checkbox" data-preset-select="${escapeHtml(p.id)}" ${selected ? 'checked' : ''}>
+      </label>
       <div class="preset-row-main">
         <strong>${escapeHtml(p.label)}</strong>
         <span class="badge badge-muted">${escapeHtml(p.distribution || '')}</span>
         <span class="badge badge-muted">${escapeHtml(p.architecture || '')}</span>
         ${statusBadge}
         <span class="badge badge-muted">${escapeHtml(p.catalog_kind || 'catalogue')}</span>
-        <span class="hint">${p.source_count ?? 0} source(s)${p.linked_iso_item_id ? ` · ISO #${p.linked_iso_item_id}` : ''}</span>
+        <span class="hint">${escapeHtml(t('preset.sources_count', { count: p.source_count ?? 0 }))}${p.linked_iso_item_id ? ` · ISO #${p.linked_iso_item_id}` : ''}</span>
         ${update ? `<span class="hint preset-drift-hint">${escapeHtml(p.drift_summary || '')}</span>` : ''}
       </div>
       <div class="btn-row">
-        <button type="button" class="btn btn-primary btn-sm" data-preset-import="${escapeHtml(p.id)}"${p.imported ? ' hidden' : ''}>Importer</button>
-        <button type="button" class="btn btn-secondary btn-sm${update ? ' btn-warn' : ''}" data-preset-sync="${escapeHtml(p.id)}"${p.imported ? '' : ' hidden'}>Mettre à jour (sync)</button>
-        <button type="button" class="btn btn-secondary btn-sm" data-preset-scan="${escapeHtml(p.id)}">Importer + scan</button>
+        <button type="button" class="btn btn-primary btn-sm" data-preset-import="${escapeHtml(p.id)}"${p.imported ? ' hidden' : ''}>${escapeHtml(t('preset.import'))}</button>
+        <button type="button" class="btn btn-secondary btn-sm${update ? ' btn-warn' : ''}" data-preset-sync="${escapeHtml(p.id)}"${p.imported ? '' : ' hidden'}>${escapeHtml(t('preset.sync'))}</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-preset-scan="${escapeHtml(p.id)}">${escapeHtml(t('preset.import_scan'))}</button>
       </div>
     </div>`;
   }).join('');
+
+  listEl.querySelectorAll('[data-preset-select]').forEach((input) => {
+    input.addEventListener('change', () => {
+      const presetId = String(input.dataset.presetSelect);
+
+      if (input.checked) {
+        state.presetsSelectedIds.add(presetId);
+      } else {
+        state.presetsSelectedIds.delete(presetId);
+      }
+
+      updatePresetsBulkUi();
+    });
+  });
 
   listEl.querySelectorAll('[data-preset-import]').forEach((btn) => {
     btn.addEventListener('click', () => applyPresetAction(btn.dataset.presetImport, 'import'));
@@ -802,24 +879,86 @@ function renderPresetsList() {
   listEl.querySelectorAll('[data-preset-scan]').forEach((btn) => {
     btn.addEventListener('click', () => applyPresetAction(btn.dataset.presetScan, 'import', true));
   });
+
+  updatePresetsBulkUi();
+}
+
+async function applyPresetRequest(presetId, mode, runScan = false) {
+  return api('POST', `/presets/${presetId}/apply`, {
+    mode,
+    run_scan: runScan,
+    notify: true
+  });
+}
+
+function formatPresetActionMessage(result, mode, runScan = false) {
+  const msg = result.created
+    ? t('preset.iso_created', { id: result.iso_item_id })
+    : (mode === 'sync'
+      ? t('preset.iso_updated', { id: result.iso_item_id })
+      : t('preset.iso_exists', { id: result.iso_item_id }));
+
+  return runScan && result.scan ? t('preset.scan_started', { message: msg }) : msg;
 }
 
 async function applyPresetAction(presetId, mode, runScan = false) {
   try {
-    const result = await api('POST', `/presets/${presetId}/apply`, {
-      mode,
-      run_scan: runScan,
-      notify: true
-    });
-
-    const msg = result.created
-      ? `ISO #${result.iso_item_id} créée depuis le modèle`
-      : `ISO #${result.iso_item_id} ${mode === 'sync' ? 'mise à jour' : 'déjà présente'}`;
-
-    toast(runScan && result.scan ? `${msg} - scan lancé` : msg, 'success');
+    const result = await applyPresetRequest(presetId, mode, runScan);
+    toast(formatPresetActionMessage(result, mode, runScan), 'success');
     await Promise.all([loadIsoTab(), loadPresetsList()]);
   } catch (e) {
     toast(e.message, 'error');
+  }
+}
+
+async function applyPresetsBulkAction() {
+  const selectedIds = getSelectedPresetIds();
+  const action = $('#presets-bulk-action')?.value || 'import';
+  const runScan = action === 'import_scan';
+  const mode = action === 'sync' ? 'sync' : 'import';
+  const btn = $('#btn-presets-bulk-apply');
+
+  if (!selectedIds.length) {
+    toast(t('preset.none_selected'), 'warn');
+    return;
+  }
+
+  if (btn) btn.disabled = true;
+
+  const previousLabel = btn?.textContent;
+  if (btn) btn.textContent = t('preset.processing');
+
+  let ok = 0;
+  const errors = [];
+
+  try {
+    for (const presetId of selectedIds) {
+      try {
+        await applyPresetRequest(presetId, mode, runScan);
+        ok += 1;
+      } catch (e) {
+        errors.push(`${presetId}: ${e.message}`);
+      }
+    }
+
+    state.presetsSelectedIds.clear();
+    await loadIsoTab();
+
+    if (errors.length) {
+      toast(t('preset.bulk_partial', { ok, total: selectedIds.length, failed: errors.length }), ok ? 'warn' : 'error');
+      toast(errors.slice(0, 3).join(' · '), 'error');
+    } else {
+      toast(t('preset.bulk_done', { count: ok }), 'success');
+    }
+  } finally {
+    if (btn) {
+      btn.textContent = previousLabel || t('admin.presets_bulk_apply');
+      updatePresetsBulkUi();
+    }
+
+    if (!state.presetsSelectedIds.size) {
+      updatePresetsBulkUi();
+    }
   }
 }
 
@@ -830,7 +969,7 @@ async function refreshPresetsCatalog() {
 
   try {
     const result = await api('POST', '/presets/catalog/refresh', {});
-    toast(`Catalogue GitHub actualisé (${result.preset_count} modèles)`, 'success');
+    toast(t('preset.github_refreshed', { count: result.preset_count }), 'success');
     await loadPresetsMeta();
     await loadPresetsList();
   } catch (e) {
@@ -844,6 +983,18 @@ function bindPresetsEvents() {
   $('#btn-presets-refresh')?.addEventListener('click', () => refreshPresetsCatalog().catch((e) => toast(e.message, 'error')));
   $('#presets-search')?.addEventListener('input', () => loadPresetsList().catch(() => {}));
   $('#presets-tag')?.addEventListener('change', () => loadPresetsList().catch(() => {}));
+  $('#presets-select-all')?.addEventListener('change', (e) => {
+    const visibleIds = getVisiblePresetIds();
+
+    if (e.target.checked) {
+      visibleIds.forEach((id) => state.presetsSelectedIds.add(id));
+    } else {
+      visibleIds.forEach((id) => state.presetsSelectedIds.delete(id));
+    }
+
+    renderPresetsList();
+  });
+  $('#btn-presets-bulk-apply')?.addEventListener('click', () => applyPresetsBulkAction().catch((e) => toast(e.message, 'error')));
 }
 
 /* --- ISO --- */
@@ -863,7 +1014,7 @@ function renderIsoList() {
   });
 
   if (!filtered.length) {
-    list.innerHTML = '<p class="empty">Aucune ISO.</p>';
+    list.innerHTML = `<p class="empty">${escapeHtml(t('iso.none'))}</p>`;
     renderPaginationBar($('#iso-list-pagination'), { page: 1, totalPages: 1, total: 0 }, () => {});
     return;
   }
@@ -887,15 +1038,15 @@ function renderIsoList() {
               <span class="badge badge-muted">${escapeHtml(iso.distribution || '')}</span>
               <span class="badge badge-muted">${escapeHtml(iso.architecture || '')}</span>
               ${iso.enabled ? '<span class="badge badge-ok">on</span>' : '<span class="badge badge-muted">off</span>'}
-              ${iso.is_public ? '<span class="badge badge-ok">public</span>' : ''}
-              ${iso.catalog_source ? `<span class="badge badge-muted" title="Origine configuration">${escapeHtml(iso.catalog_source)}${iso.catalog_preset_id ? ' · ' + escapeHtml(iso.catalog_preset_id) : ''}</span>` : '<span class="badge badge-muted">manuel</span>'}
-              ${catalogUpdate ? `<span class="badge badge-update" title="${escapeHtml(iso.catalog_drift_summary || '')}">catalogue : MAJ dispo</span>` : ''}
+              ${iso.is_public ? `<span class="badge badge-ok">${escapeHtml(t('common.public'))}</span>` : ''}
+              ${iso.catalog_source ? `<span class="badge badge-muted" title="${escapeHtml(t('iso.origin_title'))}">${escapeHtml(iso.catalog_source)}${iso.catalog_preset_id ? ' · ' + escapeHtml(iso.catalog_preset_id) : ''}</span>` : `<span class="badge badge-muted">${escapeHtml(t('common.manual'))}</span>`}
+              ${catalogUpdate ? `<span class="badge badge-update" title="${escapeHtml(iso.catalog_drift_summary || '')}">${escapeHtml(t('badge.catalog_update'))}</span>` : ''}
             </div>
           </div>
           <span>${open ? '▼' : '▶'}</span>
         </div>
         <div class="iso-card-body" ${open ? '' : 'hidden'} data-iso-body="${id}">
-          ${open ? '<p class="empty">Chargement…</p>' : ''}
+          ${open ? `<p class="empty">${escapeHtml(t('common.loading'))}</p>` : ''}
         </div>
       </div>`;
   }).join('');
@@ -948,40 +1099,40 @@ async function loadIsoDetail(isoId) {
               <span class="badge badge-muted">${escapeHtml(s.protocol || '')}</span>
             </div>
             <div class="btn-row">
-              <button type="button" class="btn btn-secondary btn-sm" data-action="edit-source" data-id="${s.id}">${editing ? 'Fermer' : 'Modifier'}</button>
-              <button type="button" class="btn btn-secondary btn-sm" data-action="test-source" data-id="${s.id}">Test</button>
-              <button type="button" class="btn btn-secondary btn-sm" data-action="scan-source" data-id="${s.id}">Scan</button>
-              <button type="button" class="btn btn-danger btn-sm" data-action="delete-source" data-id="${s.id}">Supprimer</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-action="edit-source" data-id="${s.id}">${editing ? escapeHtml(t('source.close')) : escapeHtml(t('source.edit'))}</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-action="test-source" data-id="${s.id}">${escapeHtml(t('source.test'))}</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-action="scan-source" data-id="${s.id}">${escapeHtml(t('source.scan'))}</button>
+              <button type="button" class="btn btn-danger btn-sm" data-action="delete-source" data-id="${s.id}">${escapeHtml(t('source.delete'))}</button>
             </div>
           </div>
           ${editing
-            ? renderSourceFormHtml(s, { formId: `source-edit-${s.id}`, isoId, submitLabel: 'Enregistrer' })
+            ? renderSourceFormHtml(s, { formId: `source-edit-${s.id}`, isoId, submitLabel: t('source.save') })
             : renderSourceReadonlyHtml(s)}
         </article>`;
     }).join('')
-    : '<p class="empty">Aucune source configurée.</p>';
+    : `<p class="empty">${escapeHtml(t('source.none'))}</p>`;
 
   body.innerHTML = `
     <div class="btn-row iso-detail-actions">
-      <button type="button" class="btn btn-primary btn-sm" data-action="scan-iso" data-id="${isoId}">Scan ISO</button>
-      <button type="button" class="btn btn-secondary btn-sm" data-action="toggle-create-source">Ajouter une source</button>
-      <button type="button" class="btn btn-danger btn-sm" data-action="delete-iso" data-id="${isoId}">Supprimer ISO</button>
+      <button type="button" class="btn btn-primary btn-sm" data-action="scan-iso" data-id="${isoId}">${escapeHtml(t('iso.scan'))}</button>
+      <button type="button" class="btn btn-secondary btn-sm" data-action="toggle-create-source">${escapeHtml(t('iso.add_source'))}</button>
+      <button type="button" class="btn btn-danger btn-sm" data-action="delete-iso" data-id="${isoId}">${escapeHtml(t('iso.delete'))}</button>
     </div>
     <div id="source-create-wrap-${isoId}" class="source-create-wrap" hidden>
-      <h4 class="section-title">Nouvelle source</h4>
-      ${renderSourceFormHtml(null, { formId: `source-create-${isoId}`, isoId, submitLabel: 'Ajouter la source' })}
+      <h4 class="section-title">${escapeHtml(t('source.new_title'))}</h4>
+      ${renderSourceFormHtml(null, { formId: `source-create-${isoId}`, isoId, submitLabel: t('source.add') })}
     </div>
-    <h4 class="section-title">Sources configurées (${sources.length})</h4>
+    <h4 class="section-title">${escapeHtml(t('source.configured', { count: sources.length }))}</h4>
     <div class="sources-list">${sourcesHtml}</div>
-    <h4 class="section-title">Releases récentes (${releases.length})</h4>
-    ${releases.length ? `<div class="table-scroll"><table class="data-table"><thead><tr><th>Version</th><th>Fichier</th><th>URL</th><th>Stockage</th></tr></thead><tbody>
+    <h4 class="section-title">${escapeHtml(t('iso.recent_releases', { count: releases.length }))}</h4>
+    ${releases.length ? `<div class="table-scroll"><table class="data-table"><thead><tr><th>${escapeHtml(t('iso.col.version'))}</th><th>${escapeHtml(t('iso.col.file'))}</th><th>${escapeHtml(t('iso.col.url'))}</th><th>${escapeHtml(t('iso.col.storage'))}</th></tr></thead><tbody>
       ${releases.map((r) => `<tr>
         <td>${escapeHtml(r.version || '-')}</td>
         <td class="break-all">${escapeHtml(r.filename)}</td>
-        <td class="break-all"><a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">lien</a></td>
+        <td class="break-all"><a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${escapeHtml(t('iso.link'))}</a></td>
         <td>${dlStatusBadge(r.download_status)}</td>
       </tr>`).join('')}
-    </tbody></table></div>` : '<p class="empty">Aucune release.</p>'}
+    </tbody></table></div>` : `<p class="empty">${escapeHtml(t('iso.no_releases'))}</p>`}
   `;
 
   body.querySelector('[data-action="toggle-create-source"]')?.addEventListener('click', () => {
@@ -1010,17 +1161,17 @@ function bindIsoDetailActions(body, isoId) {
   body.querySelector('[data-action="scan-iso"]')?.addEventListener('click', async () => {
     try {
       await api('POST', `/iso-items/${isoId}/scan`, { notify: true });
-      toast('Scan lancé', 'success');
+      toast(t('toast.scan_started'), 'success');
     } catch (e) {
       toast(e.message, 'error');
     }
   });
 
   body.querySelector('[data-action="delete-iso"]')?.addEventListener('click', async () => {
-    if (!confirm('Supprimer cette ISO ?')) return;
+    if (!confirm(t('iso.confirm_delete'))) return;
     try {
       await api('DELETE', `/iso-items/${isoId}`);
-      toast('ISO supprimée', 'success');
+      toast(t('toast.iso_deleted'), 'success');
       state.expandedIsoId = null;
       loadIsoTab();
     } catch (e) {
@@ -1032,7 +1183,7 @@ function bindIsoDetailActions(body, isoId) {
     btn.addEventListener('click', async () => {
       try {
         const r = await api('POST', `/sources/${btn.dataset.id}/test`);
-        toast(`Test OK - ${r.matches?.length ?? 0} correspondance(s)`, 'success');
+        toast(t('toast.test_ok', { count: r.matches?.length ?? 0 }), 'success');
       } catch (e) {
         toast(e.message, 'error');
       }
@@ -1043,7 +1194,7 @@ function bindIsoDetailActions(body, isoId) {
     btn.addEventListener('click', async () => {
       try {
         await api('POST', `/sources/${btn.dataset.id}/scan`, { notify: true });
-        toast('Scan source lancé', 'success');
+        toast(t('toast.source_scan_started'), 'success');
       } catch (e) {
         toast(e.message, 'error');
       }
@@ -1052,10 +1203,10 @@ function bindIsoDetailActions(body, isoId) {
 
   body.querySelectorAll('[data-action="delete-source"]').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      if (!confirm('Supprimer cette source ?')) return;
+      if (!confirm(t('iso.confirm_delete_source'))) return;
       try {
         await api('DELETE', `/sources/${btn.dataset.id}`);
-        toast('Source supprimée', 'success');
+        toast(t('toast.source_deleted'), 'success');
         loadIsoDetail(isoId);
       } catch (e) {
         toast(e.message, 'error');
@@ -1070,13 +1221,13 @@ function renderReleasesTable() {
   const meta = paginateSlice(rows, state.pagination.releases);
 
   if (!rows.length) {
-    el.innerHTML = '<p class="empty">Aucune release.</p>';
+    el.innerHTML = `<p class="empty">${escapeHtml(t('releases.none'))}</p>`;
     renderPaginationBar($('#releases-pagination'), { page: 1, totalPages: 1, total: 0 }, () => {});
     return;
   }
 
   el.innerHTML = `<table class="data-table"><thead><tr>
-    <th>ISO</th><th>Version</th><th>Fichier</th><th>Taille</th><th>Stockage</th><th>Détectée</th><th></th>
+    <th>${escapeHtml(t('releases.col.iso'))}</th><th>${escapeHtml(t('releases.col.version'))}</th><th>${escapeHtml(t('releases.col.file'))}</th><th>${escapeHtml(t('releases.col.size'))}</th><th>${escapeHtml(t('releases.col.storage'))}</th><th>${escapeHtml(t('releases.col.detected'))}</th><th></th>
   </tr></thead><tbody>${meta.items.map((r) => `<tr>
     <td>${escapeHtml(r.iso_name || r.distribution || '-')}</td>
     <td>${escapeHtml(r.version || '-')}</td>
@@ -1086,7 +1237,7 @@ function renderReleasesTable() {
     <td>${escapeHtml(r.detected_at || '')}</td>
     <td class="btn-row">
       <a href="${escapeHtml(r.url)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">URL</a>
-      ${state.uiConfig?.storage_enabled ? `<button class="btn btn-secondary btn-sm" data-dl-release="${r.id}">DL local</button>` : ''}
+      ${state.uiConfig?.storage_enabled ? `<button class="btn btn-secondary btn-sm" data-dl-release="${r.id}">${escapeHtml(t('releases.dl_local'))}</button>` : ''}
     </td>
   </tr>`).join('')}</tbody></table>`;
 
@@ -1101,13 +1252,13 @@ function renderReleasesTable() {
         const r = await api('POST', `/releases/${releaseId}/download`);
 
         if (r.linked || r.skipped_download) {
-          toast('Fichier local déjà présent - référencé sans retéléchargement', 'success');
+          toast(t('toast.dl_already_local'), 'success');
         } else if (r.accepted || r.status === 'downloading') {
-          toast(r.message || 'Téléchargement démarré - suivi dans Stockage', 'info');
+          toast(r.message || t('toast.dl_started'), 'info');
         } else if (r.ok) {
-          toast('Téléchargement terminé', 'success');
+          toast(t('toast.dl_done'), 'success');
         } else {
-          toast(r.message || r.error || 'Échec du téléchargement', 'error');
+          toast(r.message || r.error || t('toast.dl_failed'), 'error');
         }
 
         loadReleases();
@@ -1143,18 +1294,18 @@ function renderScansTable() {
   const meta = paginateSlice(rows, state.pagination.scans);
 
   if (!rows.length) {
-    el.innerHTML = '<p class="empty">Aucun scan.</p>';
+    el.innerHTML = `<p class="empty">${escapeHtml(t('scans.none'))}</p>`;
     renderPaginationBar($('#scans-pagination'), { page: 1, totalPages: 1, total: 0 }, () => {});
     return;
   }
 
   el.innerHTML = `<table class="data-table"><thead><tr>
-    <th>ID</th><th>Statut</th><th>Type</th><th>Sources</th><th>Nouv.</th><th>Début</th><th></th>
+    <th>${escapeHtml(t('scans.col.id'))}</th><th>${escapeHtml(t('scans.col.status'))}</th><th>${escapeHtml(t('scans.col.type'))}</th><th>${escapeHtml(t('scans.col.sources'))}</th><th>${escapeHtml(t('scans.col.new'))}</th><th>${escapeHtml(t('scans.col.start'))}</th><th></th>
   </tr></thead><tbody>${meta.items.map((s) => `<tr>
     <td>#${s.id}</td><td>${scanStatusBadge(s.status)}</td><td>${escapeHtml(s.trigger_type)}</td>
     <td>${s.completed_sources ?? 0}/${s.total_sources ?? s.checked_sources ?? '-'}</td>
     <td>${s.new_releases ?? 0}</td><td>${escapeHtml(s.started_at)}</td>
-    <td><button class="btn btn-secondary btn-sm" data-scan-detail="${s.id}">Détail</button></td>
+    <td><button class="btn btn-secondary btn-sm" data-scan-detail="${s.id}">${escapeHtml(t('scans.detail'))}</button></td>
   </tr>`).join('')}</tbody></table>`;
 
   el.querySelectorAll('[data-scan-detail]').forEach((btn) => {
@@ -1179,38 +1330,38 @@ async function showScanDetail(id) {
   try {
     card.hidden = false;
     card.removeAttribute('hidden');
-    $('#scan-detail-body').innerHTML = '<p class="empty">Chargement du détail…</p>';
+    $('#scan-detail-body').innerHTML = `<p class="empty">${escapeHtml(t('scans.detail_loading'))}</p>`;
     card.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
     const scan = await api('GET', `/scans/${id}?log_limit=5000`);
     const logsRes = await api('GET', `/scans/${id}/logs?limit=5000`);
     const logEntries = Array.isArray(logsRes?.logs) ? logsRes.logs : (Array.isArray(logsRes) ? logsRes : []);
 
-    $('#scan-detail-title').textContent = `Scan #${id} - ${scan.status}`;
+    $('#scan-detail-title').textContent = t('scans.detail_title', { id, status: scan.status });
     const sources = scan.sources || [];
 
     $('#scan-detail-body').innerHTML = `
       <div class="scan-detail-meta">
-        <p>Statut : ${scanStatusBadge(scan.status)} · Progression : <strong>${scan.progress_percent ?? 0}%</strong></p>
-        <p>Nouvelles releases : <strong>${scan.new_releases ?? 0}</strong> · Sources : ${scan.completed_sources ?? 0}/${scan.total_sources ?? '-'} · Durée : ${scan.duration_ms ?? '-'} ms</p>
-        <p class="hint">Début : ${escapeHtml(scan.started_at || '-')} · Fin : ${escapeHtml(scan.finished_at || '-')}</p>
+        <p>${escapeHtml(t('scans.col.status'))} : ${scanStatusBadge(scan.status)} · ${escapeHtml(t('scans.detail_progress', { percent: scan.progress_percent ?? 0 }))}</p>
+        <p>${escapeHtml(t('scans.detail_meta', { newReleases: scan.new_releases ?? 0, completed: scan.completed_sources ?? 0, total: scan.total_sources ?? '-', duration: scan.duration_ms ?? '-' }))}</p>
+        <p class="hint">${escapeHtml(t('scans.detail_times', { start: scan.started_at || '-', end: scan.finished_at || '-' }))}</p>
       </div>
-      ${sources.length ? `<div class="table-scroll"><table class="data-table"><thead><tr><th>ISO</th><th>Source</th><th>URL</th><th>Statut</th><th>Match</th><th>Nouv.</th><th>Erreur</th></tr></thead><tbody>
+      ${sources.length ? `<div class="table-scroll"><table class="data-table"><thead><tr><th>${escapeHtml(t('scans.col.iso'))}</th><th>${escapeHtml(t('scans.col.source'))}</th><th>${escapeHtml(t('scans.col.url'))}</th><th>${escapeHtml(t('scans.col.status'))}</th><th>${escapeHtml(t('scans.col.match'))}</th><th>${escapeHtml(t('scans.col.new'))}</th><th>${escapeHtml(t('scans.col.error'))}</th></tr></thead><tbody>
         ${sources.map((r) => `<tr>
           <td>${escapeHtml(r.iso_name)}</td>
           <td>${escapeHtml(r.source_name)}</td>
-          <td class="break-all"><a href="${escapeHtml(r.source_url)}" target="_blank" rel="noopener">lien</a></td>
+          <td class="break-all"><a href="${escapeHtml(r.source_url)}" target="_blank" rel="noopener">${escapeHtml(t('iso.link'))}</a></td>
           <td>${scanStatusBadge(r.status)}</td>
           <td>${r.matches_found ?? 0}</td>
           <td>${r.new_releases ?? 0}</td>
           <td class="break-all">${escapeHtml(r.error_message || '-')}</td>
         </tr>`).join('')}
-      </tbody></table></div>` : '<p class="empty">Aucune source dans ce scan.</p>'}
-      <h4 class="section-title">Logs (${logEntries.length})</h4>
+      </tbody></table></div>` : `<p class="empty">${escapeHtml(t('scans.no_sources'))}</p>`}
+      <h4 class="section-title">${escapeHtml(t('scans.logs', { count: logEntries.length }))}</h4>
       <pre class="code-block code-block-tall">${escapeHtml(logEntries.map((l) => `[${l.level}] ${l.message}`).join('\n') || '-')}</pre>
     `;
   } catch (e) {
-    $('#scan-detail-body').innerHTML = `<p class="empty">Erreur : ${escapeHtml(e.message)}</p>`;
+    $('#scan-detail-body').innerHTML = `<p class="empty">${escapeHtml(t('preset.error', { message: e.message }))}</p>`;
     toast(e.message, 'error');
   }
 }
@@ -1222,12 +1373,12 @@ function renderStorageTable() {
   const tableHost = $('#storage-tracked-table');
 
   if (!tracked.length) {
-    tableHost.innerHTML = '<p class="empty">Aucune release suivie.</p>';
+    tableHost.innerHTML = `<p class="empty">${escapeHtml(t('storage.none'))}</p>`;
     renderPaginationBar($('#storage-pagination'), { page: 1, totalPages: 1, total: 0 }, () => {});
     return;
   }
 
-  tableHost.innerHTML = `<table class="data-table"><thead><tr><th>ISO</th><th>Fichier</th><th>Statut</th><th>Taille</th></tr></thead><tbody>
+  tableHost.innerHTML = `<table class="data-table"><thead><tr><th>${escapeHtml(t('storage.col.iso'))}</th><th>${escapeHtml(t('storage.col.file'))}</th><th>${escapeHtml(t('storage.col.status'))}</th><th>${escapeHtml(t('storage.col.size'))}</th></tr></thead><tbody>
     ${meta.items.map((r) => `<tr><td>${escapeHtml(r.iso_name)}</td><td class="break-all">${escapeHtml(r.filename)}</td><td>${dlStatusBadge(r.download_status)}</td><td>${formatBytes(r.file_size)}</td></tr>`).join('')}
   </tbody></table>`;
 
@@ -1245,12 +1396,12 @@ async function loadStorage() {
 
   $('#storage-panel').innerHTML = `
     <div class="btn-row" style="margin-bottom:1rem">
-      ${st.enabled ? '<span class="badge badge-ok">Stockage actif</span>' : '<span class="badge badge-muted">Stockage désactivé</span>'}
-      <span class="badge badge-warn">${counts.downloading ?? 0} en cours</span>
-      <span class="badge badge-ok">${counts.completed ?? 0} local</span>
-      <span class="badge badge-error">${counts.failed ?? 0} échec(s)</span>
+      ${st.enabled ? `<span class="badge badge-ok">${escapeHtml(t('badge.storage_active'))}</span>` : `<span class="badge badge-muted">${escapeHtml(t('badge.storage_disabled'))}</span>`}
+      <span class="badge badge-warn">${counts.downloading ?? 0} · ${escapeHtml(t('dl.downloading'))}</span>
+      <span class="badge badge-ok">${counts.completed ?? 0} · ${escapeHtml(t('dl.completed'))}</span>
+      <span class="badge badge-error">${escapeHtml(t('storage.failed_count', { count: counts.failed ?? 0 }))}</span>
     </div>
-    <p class="hint">File : ${st.queue?.active ?? 0} actif(s), ${st.queue?.queued ?? 0} en attente (max ${st.queue?.max_parallel ?? 2})</p>
+    <p class="hint">${escapeHtml(t('storage.queue', { active: st.queue?.active ?? 0, queued: st.queue?.queued ?? 0, max: st.queue?.max_parallel ?? 2 }))}</p>
     <div id="storage-tracked-table" class="table-scroll"></div>
     <div id="storage-pagination" class="pagination-bar"></div>
   `;
@@ -1265,12 +1416,12 @@ function renderEventsTable() {
   const host = $('#events-table');
 
   if (!events.length) {
-    host.innerHTML = '<p class="empty">Aucun événement.</p>';
+    host.innerHTML = `<p class="empty">${escapeHtml(t('notifications.no_events'))}</p>`;
     renderPaginationBar($('#events-pagination'), { page: 1, totalPages: 1, total: 0 }, () => {});
     return;
   }
 
-  host.innerHTML = `<table class="data-table"><thead><tr><th>ID</th><th>Titre</th><th>Type</th><th>Date</th></tr></thead><tbody>
+  host.innerHTML = `<table class="data-table"><thead><tr><th>${escapeHtml(t('notifications.col.id'))}</th><th>${escapeHtml(t('notifications.col.title'))}</th><th>${escapeHtml(t('notifications.col.type'))}</th><th>${escapeHtml(t('notifications.col.date'))}</th></tr></thead><tbody>
     ${meta.items.map((e) => `<tr><td>#${e.id}</td><td>${escapeHtml(e.title)}</td><td>${escapeHtml(e.event_type)}</td><td>${escapeHtml(e.created_at)}</td></tr>`).join('')}
   </tbody></table>`;
 
@@ -1286,12 +1437,12 @@ function renderDeliveriesTable() {
   const host = $('#deliveries-table');
 
   if (!deliveries.length) {
-    host.innerHTML = '<p class="empty">Aucune livraison.</p>';
+    host.innerHTML = `<p class="empty">${escapeHtml(t('notifications.no_deliveries'))}</p>`;
     renderPaginationBar($('#deliveries-pagination'), { page: 1, totalPages: 1, total: 0 }, () => {});
     return;
   }
 
-  host.innerHTML = `<table class="data-table"><thead><tr><th>ID</th><th>Statut</th><th>Tentatives</th><th></th></tr></thead><tbody>
+  host.innerHTML = `<table class="data-table"><thead><tr><th>${escapeHtml(t('notifications.col.id'))}</th><th>${escapeHtml(t('notifications.col.status'))}</th><th>${escapeHtml(t('notifications.col.attempts'))}</th><th></th></tr></thead><tbody>
     ${meta.items.map((d) => `<tr>
       <td>#${d.id}</td><td>${escapeHtml(d.status)}</td><td>${d.attempt_count ?? 0}</td>
       <td>${d.status === 'failed' ? `<button class="btn btn-secondary btn-sm" data-retry="${d.id}">Retry</button>` : ''}</td>
@@ -1302,7 +1453,7 @@ function renderDeliveriesTable() {
     btn.addEventListener('click', async () => {
       try {
         await api('POST', `/notifications/deliveries/${btn.dataset.retry}/retry`);
-        toast('Relance envoyée', 'success');
+        toast(t('toast.retry_sent'), 'success');
         loadNotifications();
       } catch (e) {
         toast(e.message, 'error');
@@ -1342,17 +1493,17 @@ function renderUsersTable() {
   const host = $('#users-table');
 
   if (!users.length) {
-    host.innerHTML = '<p class="empty">Aucun utilisateur.</p>';
+    host.innerHTML = `<p class="empty">${escapeHtml(t('users.none'))}</p>`;
     renderPaginationBar($('#users-pagination'), { page: 1, totalPages: 1, total: 0 }, () => {});
     return;
   }
 
-  host.innerHTML = `<table class="data-table"><thead><tr><th>ID</th><th>Type</th><th>Nom</th><th>Email</th><th></th></tr></thead><tbody>
+  host.innerHTML = `<table class="data-table"><thead><tr><th>${escapeHtml(t('users.col.id'))}</th><th>${escapeHtml(t('users.col.type'))}</th><th>${escapeHtml(t('users.col.name'))}</th><th>${escapeHtml(t('users.col.email'))}</th><th></th></tr></thead><tbody>
     ${meta.items.map((u) => `<tr>
       <td>#${u.id}</td><td>${escapeHtml(u.user_type)}</td>
       <td>${escapeHtml(u.display_name || u.username || '-')}</td>
       <td>${escapeHtml(u.email || '-')}</td>
-      <td><button class="btn btn-secondary btn-sm" data-user-id="${u.id}">Détails</button></td>
+      <td><button class="btn btn-secondary btn-sm" data-user-id="${u.id}">${escapeHtml(t('users.details'))}</button></td>
     </tr>`).join('')}
   </tbody></table>`;
 
@@ -1379,11 +1530,11 @@ async function loadUserDetail(userId) {
     api('GET', `/users/${userId}/subscriptions`)
   ]);
   $('#user-detail').innerHTML = `
-    <h4 style="margin-top:1rem">${escapeHtml(user.display_name || user.username || 'Utilisateur #' + userId)}</h4>
-    <p class="hint">Type : ${escapeHtml(user.user_type)} · Email : ${escapeHtml(user.email || '-')}</p>
-    <h5>Destinations (${dests.length})</h5>
+    <h4 style="margin-top:1rem">${escapeHtml(user.display_name || user.username || t('users.profile', { id: userId }))}</h4>
+    <p class="hint">${escapeHtml(t('users.profile_meta', { type: user.user_type, email: user.email || '-' }))}</p>
+    <h5>${escapeHtml(t('users.destinations', { count: dests.length }))}</h5>
     ${dests.length ? `<ul>${dests.map((d) => `<li>#${d.id} ${escapeHtml(d.destination_type)} - ${escapeHtml(d.label || d.target)}</li>`).join('')}</ul>` : '<p class="empty">-</p>'}
-    <h5>Abonnements (${subs.length})</h5>
+    <h5>${escapeHtml(t('users.subscriptions', { count: subs.length }))}</h5>
     ${subs.length ? `<ul>${subs.map((s) => `<li>ISO #${s.iso_item_id} - ${escapeHtml(s.notify_mode)}</li>`).join('')}</ul>` : '<p class="empty">-</p>'}
   `;
 }
@@ -1430,7 +1581,7 @@ function bindEvents() {
     payload.is_public = fd.has('is_public');
     try {
       await api('POST', '/iso-items', payload);
-      toast('ISO créée', 'success');
+      toast(t('toast.iso_created'), 'success');
       e.target.reset();
       e.target.hidden = true;
       loadIsoTab();
@@ -1451,7 +1602,7 @@ function bindEvents() {
   $('#btn-scan-global')?.addEventListener('click', async () => {
     try {
       await api('POST', '/scans/run', { notify: true });
-      toast('Scan global lancé', 'success');
+      toast(t('toast.scan_global'), 'success');
       loadScans();
     } catch (e) {
       toast(e.message, 'error');
@@ -1485,14 +1636,55 @@ function bindEvents() {
         destination_id: Number(fd.get('destination_id')),
         include_fake_release: fd.has('include_fake_release')
       });
-      toast('Notification test envoyée', 'success');
+      toast(t('toast.notif_test'), 'success');
     } catch (err) {
       toast(err.message, 'error');
     }
   });
 }
 
+async function refreshAdminStaticUi() {
+  IW_I18N?.applyDom();
+  const tab = state.activeTab;
+  const titles = tabTitles();
+  if (titles[tab]) {
+    $('#page-title').textContent = titles[tab][0];
+    $('#page-subtitle').textContent = titles[tab][1];
+  }
+  $$('#sidebar-nav .nav-item').forEach((btn) => {
+    const key = btn.dataset.tab;
+    if (titles[key]) btn.textContent = titles[key][0];
+  });
+  updatePresetsBulkUi();
+
+  if (!state.session) return;
+
+  try {
+    if (tab === 'dashboard') await loadDashboard();
+    else if (tab === 'iso') {
+      renderIsoList();
+      if (state.expandedIsoId) await loadIsoDetail(state.expandedIsoId);
+      await loadPresetsMeta();
+      renderPresetsList();
+    } else if (tab === 'releases') renderReleasesTable();
+    else if (tab === 'scans') renderScansTable();
+    else if (tab === 'storage') await loadStorage();
+    else if (tab === 'notifications') {
+      renderEventsTable();
+      renderDeliveriesTable();
+    } else if (tab === 'reports') await loadReportsList();
+    else if (tab === 'users') renderUsersTable();
+  } catch {
+    /* ignore refresh errors on locale switch */
+  }
+}
+
 bindEvents();
+window.addEventListener('iw-locale-change', () => {
+  window.IW_I18N?.applyDom?.();
+  refreshAdminStaticUi();
+});
+
 initAuth().catch((e) => {
   showLoginScreen();
   $('#login-error').textContent = e.message;

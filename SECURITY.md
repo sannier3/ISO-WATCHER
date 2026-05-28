@@ -1,5 +1,7 @@
 # Sécurité - ISO Watcher
 
+[![Français](https://img.shields.io/badge/lang-Français-blue.svg)](SECURITY.md) [![English](https://img.shields.io/badge/lang-English-lightgrey.svg)](SECURITY.en.md) [![License](https://img.shields.io/badge/License-MIT-success?style=flat-square)](../LICENSE)
+
 Ce document décrit les risques connus et les bonnes pratiques pour déployer ISO Watcher.
 
 ## Modèle de confiance

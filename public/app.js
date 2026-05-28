@@ -17,6 +17,8 @@ const state = {
 };
 
 const $ = (id) => document.getElementById(id);
+const t = (key, vars) => window.IW_I18N?.t(key, vars) ?? key;
+const localeTag = () => (window.IW_I18N?.getLocale() === 'en' ? 'en-GB' : 'fr-FR');
 
 function escapeHtml(s) {
   return String(s ?? '')
@@ -106,7 +108,7 @@ async function api(method, path, body = null) {
     try {
       data = JSON.parse(text);
     } catch {
-      throw new Error('Réponse invalide');
+      throw new Error(t('toast.invalid_response'));
     }
   }
   if (!res.ok) {
@@ -125,7 +127,7 @@ async function fetchPublic(path) {
 function formatBytes(n) {
   const v = Number(n);
   if (!v || v < 1) return '-';
-  const u = ['o', 'Ko', 'Mo', 'Go'];
+  const u = [t('bytes.B'), t('bytes.KB'), t('bytes.MB'), t('bytes.GB')];
   let x = v;
   let i = 0;
   while (x >= 1024 && i < u.length - 1) {
@@ -181,22 +183,22 @@ function renderLastAction() {
   panel.removeAttribute('hidden');
 
   const labels = {
-    health: 'Santé du service',
-    scan: 'Scan complet',
-    link_check: 'Vérification des liens'
+    health: t('public.last_action.health'),
+    scan: t('public.last_action.scan'),
+    link_check: t('public.last_action.link_check')
   };
 
   $('last-action-summary').textContent = `${labels[action.type] || action.type} - ${action.startedAt || ''}`;
   const badge = $('last-action-badge');
 
   if (action.pending) {
-    badge.textContent = 'En cours…';
+    badge.textContent = t('public.badge.running');
     badge.className = 'badge badge-warn';
   } else if (action.ok) {
-    badge.textContent = 'Terminé';
+    badge.textContent = t('public.badge.done');
     badge.className = 'badge badge-ok';
   } else {
-    badge.textContent = 'Erreur';
+    badge.textContent = t('common.error');
     badge.className = 'badge badge-error';
   }
 
@@ -240,7 +242,7 @@ async function pollLastAction() {
       action.pending = false;
       action.ok = scan.status === 'success' || scan.status === 'partial_error';
       stopPoll();
-      toast(action.ok ? 'Scan terminé' : 'Scan terminé avec erreurs', action.ok ? 'success' : 'error');
+      toast(action.ok ? t('public.scan_done') : t('public.scan_done_errors'), action.ok ? 'success' : 'error');
       loadReleases().catch(() => {});
     }
 
@@ -265,14 +267,15 @@ async function ensureSession() {
     const res = await fetch('/api/v1/public/ui-session', {
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      credentials: 'include'
+      credentials: 'include',
+      body: '{}'
     });
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
       const msg = data?.error === 'too_many_attempts'
-        ? 'Trop de tentatives. Réessayez plus tard.'
-        : (data?.error || 'Session opérateur refusée');
+        ? t('toast.too_many_attempts')
+        : (data?.error || t('public.session_denied'));
       throw new Error(msg);
     }
 
@@ -294,7 +297,7 @@ async function ensureSession() {
     return true;
   }
 
-  toast('Token API requis - ouvrez « Accès opérateur »', 'error');
+  toast(t('public.token_required'), 'error');
   $('operator-panel').hidden = false;
   $('operator-panel').open = true;
   return false;
@@ -302,16 +305,14 @@ async function ensureSession() {
 
 function storageStatusLabel(storage) {
   if (!storage?.enabled) {
-    return 'Stockage local : désactivé.';
+    return t('public.storage_disabled');
   }
 
-  const parts = [
-    `accessible : ${storage.reachable ? 'oui' : 'non'}`,
-    `lecture : ${storage.readable ? 'oui' : 'non'}`,
-    `écriture : ${storage.writable ? 'oui' : 'non'}`
-  ];
-
-  return `Répertoire ISO - ${parts.join(' · ')}.`;
+  return t('public.storage_summary', {
+    reachable: storage.reachable ? t('common.yes') : t('common.no'),
+    readable: storage.readable ? t('common.yes') : t('common.no'),
+    writable: storage.writable ? t('common.yes') : t('common.no')
+  });
 }
 
 function formatHealthSummary(health, ready) {
@@ -321,12 +322,12 @@ function formatHealthSummary(health, ready) {
 
   lines.push(
     serviceOk
-      ? `Service opérationnel - base ${health?.db_driver || '-'}, version ${health?.version || '-'}.`
-      : 'Le service signale un problème (vérifiez le détail ci-dessous).'
+      ? t('public.health_ok_detail', { driver: health?.db_driver || '-', version: health?.version || '-' })
+      : t('public.health_ko_detail')
   );
 
   if (!readyOk) {
-    lines.push('Base de données : indisponible ou non prête.');
+    lines.push(t('public.health_db_unready'));
   }
 
   lines.push(storageStatusLabel(health?.storage));
@@ -335,11 +336,11 @@ function formatHealthSummary(health, ready) {
 
   if (storage?.enabled && !storage.ok && storage.error) {
     const hints = {
-      storage_unreachable: 'Le répertoire configuré est introuvable ou le montage est indisponible.',
-      storage_not_directory: 'La cible configurée n’est pas un dossier.',
-      storage_not_readable: 'Le service ne peut pas lire le répertoire.',
-      storage_not_writable: 'Le service ne peut pas écrire dans le répertoire (téléchargements impossibles).',
-      storage_check_failed: 'La vérification du stockage a échoué.'
+      storage_unreachable: t('public.storage_unreachable'),
+      storage_not_directory: t('public.storage_not_directory'),
+      storage_not_readable: t('public.storage_not_readable'),
+      storage_not_writable: t('public.storage_not_writable'),
+      storage_check_failed: t('public.storage_check_failed')
     };
     const hint = hints[storage.error];
 
@@ -354,21 +355,21 @@ function formatHealthSummary(health, ready) {
 /** Libellé court pour visiteurs sans auth (pas de détail technique). */
 function healthStatusFrom(health, ready) {
   if (!health) {
-    return { ok: false, label: 'Hors ligne', phrase: 'Service indisponible.' };
+    return { ok: false, label: t('common.offline'), phrase: t('public.health_service_ko') };
   }
 
   const serviceOk = Boolean(health.ok && ready?.ok !== false);
   const storageOk = !health.storage?.enabled || health.storage?.ok !== false;
 
   if (!serviceOk) {
-    return { ok: false, label: 'Hors ligne', phrase: 'Service indisponible.' };
+    return { ok: false, label: t('common.offline'), phrase: t('public.health_service_ko') };
   }
 
   if (!storageOk) {
-    return { ok: false, label: 'Dégradé', phrase: 'Service dégradé.' };
+    return { ok: false, label: t('common.error'), phrase: t('public.health_service_ko') };
   }
 
-  return { ok: true, label: 'OK', phrase: 'Service opérationnel.' };
+  return { ok: true, label: t('common.ok'), phrase: t('public.health_service_ok') };
 }
 
 function updateHealthUi(health, ready) {
@@ -382,9 +383,9 @@ function updateHealthUi(health, ready) {
     if (!detailed || !health) {
       label.textContent = status.label;
     } else if (!status.ok && health.storage?.enabled && !health.storage?.ok) {
-      label.textContent = `Stockage · ${health.db_driver || '-'}`;
+      label.textContent = t('public.storage_label', { driver: health.db_driver || '-' });
     } else if (!Boolean(health.ok && ready?.ok !== false)) {
-      label.textContent = 'Erreur';
+      label.textContent = t('common.error');
     } else {
       label.textContent = `OK · ${health.db_driver || '-'}`;
     }
@@ -397,7 +398,7 @@ function updateHealthUi(health, ready) {
 
   if (summary) {
     if (!health) {
-      summary.textContent = 'Impossible de contacter le service.';
+      summary.textContent = t('public.health_unreachable');
     } else if (detailed) {
       summary.textContent = formatHealthSummary(health, ready);
     } else {
@@ -416,7 +417,7 @@ async function loadHealth() {
   const ready = await readyRes.json().catch(() => ({}));
 
   if (!healthRes.ok) {
-    throw new Error('Échec /health');
+    throw new Error(t('public.health_failed'));
   }
 
   updateHealthUi(health, ready);
@@ -433,15 +434,15 @@ function renderReleasesPage() {
   const rows = all.slice(start, start + RELEASES_PAGE_SIZE);
 
   if (!total) {
-    wrap.innerHTML = '<p class="empty">Aucune release.</p>';
-    $('releases-stats').textContent = '0 release';
+    wrap.innerHTML = `<p class="empty">${escapeHtml(t('public.releases_empty'))}</p>`;
+    $('releases-stats').textContent = t('public.releases_count', { count: 0 });
     $('releases-pagination').innerHTML = '';
     return;
   }
 
-  $('releases-stats').textContent = `${total} release(s)`;
+  $('releases-stats').textContent = t('public.releases_count', { count: total });
   wrap.innerHTML = `<table class="data-table"><thead><tr>
-    <th>ISO</th><th>Version</th><th>Fichier</th><th>Taille</th><th>Détectée</th>
+    <th>${escapeHtml(t('releases.col.iso'))}</th><th>${escapeHtml(t('releases.col.version'))}</th><th>${escapeHtml(t('releases.col.file'))}</th><th>${escapeHtml(t('releases.col.size'))}</th><th>${escapeHtml(t('releases.col.detected'))}</th>
   </tr></thead><tbody>${rows.map((r) => `<tr>
     <td>${escapeHtml(r.iso_name || r.distribution || '-')}</td>
     <td>${escapeHtml(r.version || '-')}</td>
@@ -459,9 +460,9 @@ function renderReleasesPage() {
 
   pag.innerHTML = `
     <div class="pagination">
-      <button type="button" class="btn btn-secondary btn-sm" id="releases-prev" ${page <= 1 ? 'disabled' : ''}>Précédent</button>
-      <span class="hint">Page ${page} / ${totalPages}</span>
-      <button type="button" class="btn btn-secondary btn-sm" id="releases-next" ${page >= totalPages ? 'disabled' : ''}>Suivant</button>
+      <button type="button" class="btn btn-secondary btn-sm" id="releases-prev" ${page <= 1 ? 'disabled' : ''}>${escapeHtml(t('common.prev'))}</button>
+      <span class="hint">${escapeHtml(t('common.page', { page, totalPages, total }))}</span>
+      <button type="button" class="btn btn-secondary btn-sm" id="releases-next" ${page >= totalPages ? 'disabled' : ''}>${escapeHtml(t('common.next'))}</button>
     </div>`;
 
   $('releases-prev')?.addEventListener('click', () => {
@@ -492,7 +493,7 @@ async function runHealthAction() {
 
   const detailed = hasOperatorAuth();
   state.healthBusy = true;
-  const startedAt = new Date().toLocaleString('fr-FR');
+  const startedAt = new Date().toLocaleString(localeTag());
   const buttons = [$('btn-health'), $('btn-health-header')];
 
   buttons.forEach((b) => {
@@ -505,7 +506,7 @@ async function runHealthAction() {
       startedAt,
       pending: true,
       ok: false,
-      resultText: 'Vérification de /health et /ready…'
+      resultText: t('public.health_checking')
     });
   }
 
@@ -559,7 +560,7 @@ async function runHealthAction() {
 async function runScanAction() {
   if (!(await ensureSession())) return;
 
-  const startedAt = new Date().toLocaleString('fr-FR');
+  const startedAt = new Date().toLocaleString(localeTag());
   setLastAction({
     type: 'scan',
     startedAt,
@@ -582,7 +583,7 @@ async function runScanAction() {
     renderLastAction();
     showLastActionPanel();
     startPoll();
-    toast('Scan lancé en arrière-plan', 'info');
+    toast(t('public.scan_background'), 'info');
   } catch (e) {
     setLastAction({
       type: 'scan',
@@ -598,13 +599,13 @@ async function runScanAction() {
 async function runLinkCheckAction() {
   if (!(await ensureSession())) return;
 
-  const startedAt = new Date().toLocaleString('fr-FR');
+  const startedAt = new Date().toLocaleString(localeTag());
   setLastAction({
     type: 'link_check',
     startedAt,
     pending: true,
     ok: false,
-    resultText: 'Vérification en cours…'
+    resultText: t('public.link_check_running')
   });
 
   try {
@@ -622,7 +623,7 @@ async function runLinkCheckAction() {
       resultText: text
     });
 
-    toast(`Vérification OK - ${data.removed ?? 0} supprimée(s)`, 'success');
+    toast(t('public.link_check_ok', { removed: data.removed ?? 0 }), 'success');
     loadReleases().catch(() => {});
   } catch (e) {
     setLastAction({
@@ -651,7 +652,7 @@ function bindEvents() {
     if (!token) return toast('Token vide', 'error');
     saveSession({ token, actor: { username: 'operator', type: 'internal' } });
     setOperatorActionsEnabled(true);
-    toast('Token enregistré', 'success');
+    toast(t('public.token_saved'), 'success');
     loadHealth().catch(() => {});
   });
 }
@@ -680,8 +681,8 @@ async function init() {
     setOperatorActionsEnabled(true);
 
     $('actions-hint').textContent = state.config.public_actions_auto_auth
-      ? 'Scan et vérification des liens (session automatique).'
-      : 'Scan et vérification des liens - token opérateur requis ci-dessous.';
+      ? t('public.actions_auto')
+      : t('public.actions_token');
 
     if (!state.config.public_actions_auto_auth) {
       $('operator-panel').hidden = false;
@@ -702,11 +703,11 @@ async function init() {
         await ensureSession();
       } catch (e) {
         setOperatorActionsEnabled(false);
-        toast(`Actions opérateur : ${e.message}`, 'error');
+        toast(t('public.operator_error', { message: e.message }), 'error');
       }
     }
   } else {
-    $('actions-hint').textContent = 'Actions opérateur désactivées (PUBLIC_UI_ALLOW_ACTIONS=false).';
+    $('actions-hint').textContent = t('public.actions_disabled');
   }
 
   const last = loadJson(LAST_ACTION_KEY);
@@ -725,7 +726,7 @@ async function init() {
     await loadHealth();
   } catch {
     updateHealthUi(null, null);
-    $('health-pill-label').textContent = 'Hors ligne';
+    $('health-pill-label').textContent = t('common.offline');
   }
 
   loadReleases().catch((e) => toast(`Releases : ${e.message}`, 'error'));
@@ -735,6 +736,21 @@ async function init() {
   }, 60000);
 }
 
+window.addEventListener('iw-locale-change', () => {
+  window.IW_I18N?.applyDom?.();
+  renderLastAction();
+  renderReleasesPage();
+  loadHealth().catch(() => updateHealthUi(null, null));
+  if (state.config) {
+    const actionsPanel = $('panel-actions');
+    if (actionsPanel && !actionsPanel.hidden) {
+      $('actions-hint').textContent = state.config.public_actions_auto_auth
+        ? t('public.actions_auto')
+        : t('public.actions_token');
+    }
+  }
+});
+
 init().catch((e) => {
-  toast(e.message || 'Erreur de chargement', 'error');
+  toast(e.message || t('common.error'), 'error');
 });

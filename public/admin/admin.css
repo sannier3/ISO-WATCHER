@@ -54,6 +54,7 @@ body.admin-ready #app {
 
 /* Login */
 .login-screen {
+  position: relative;
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -161,7 +162,40 @@ body.admin-ready #app {
 
 .topbar h2 { margin: 0; font-size: 1.35rem; }
 .subtitle { margin: 0.25rem 0 0; color: var(--muted); font-size: 0.9rem; }
-.topbar-actions { display: flex; align-items: center; gap: 0.75rem; }
+.topbar-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+
+.iw-lang-switch {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+.iw-lang-btn {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.login-lang {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+}
+
+.iw-lang-btn[aria-pressed="true"] {
+  background: rgba(59, 130, 246, 0.25);
+  color: var(--accent);
+}
 
 .tab-panel {
   display: none;
@@ -336,7 +370,14 @@ table.data-table tr:hover td { background: rgba(255, 255, 255, 0.02); }
   display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;
   padding: 0.65rem 0.75rem; border: 1px solid var(--border, #2a3344); border-radius: 8px;
 }
-.preset-row-main { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.preset-select {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.preset-row-main { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; flex: 1 1 280px; }
+.presets-bulk-toolbar { margin: 0.75rem 0 1rem; }
+.presets-bulk-toolbar .hint { margin: 0; }
 
 .iso-card {
   border: 1px solid var(--border);

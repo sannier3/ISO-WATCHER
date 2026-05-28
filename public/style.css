@@ -180,3 +180,36 @@ footer a { color: var(--accent); }
 
 .pagination-bar { margin-top: 1rem; }
 .pagination { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+
+.iw-lang-switch {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.iw-lang-btn {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.iw-lang-btn[aria-pressed="true"] {
+  background: var(--accent);
+  color: #fff;
+}
+
+.iw-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
