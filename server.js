@@ -4648,7 +4648,7 @@ function addBoolFilter(filters, params, column, value) {
   if (value === undefined || value === null || value === '') return;
 
   filters.push(`${column} = ?`);
-  params.push(parseBool(value, false));
+  params.push(parseBool(value, false) ? 1 : 0);
 }
 
 function normalizeEmail(email) {
