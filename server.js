@@ -14,7 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { URL } from 'node:url';
 import { APP_VERSION, loadConfig, parseBool, clamp } from './lib/config.js';
-import { createDatabase } from './lib/database.js';
+import { createDatabase, sqlDetectedSince } from './lib/database.js';
 import { createFileStorage } from './lib/storage.js';
 import cookie from '@fastify/cookie';
 import { createApiRateLimiter } from './lib/api-rate-limit.js';
@@ -1743,12 +1743,26 @@ async function upsertUser(body) {
 }
 
 async function upsertSubscription(userId, isoItemId, notifyMode = 'immediate', enabled = true) {
-  await pool.query(
-    `INSERT INTO subscriptions (user_id, iso_item_id, notify_mode, enabled)
-     VALUES (?, ?, ?, ?)
-     ON DUPLICATE KEY UPDATE notify_mode = VALUES(notify_mode), enabled = VALUES(enabled), updated_at = CURRENT_TIMESTAMP`,
-    [userId, isoItemId, notifyMode, enabled]
-  );
+  const enabledVal = enabled ? 1 : 0;
+
+  if (dbDriver === 'mysql') {
+    await pool.query(
+      `INSERT INTO subscriptions (user_id, iso_item_id, notify_mode, enabled)
+       VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE notify_mode = VALUES(notify_mode), enabled = VALUES(enabled), updated_at = CURRENT_TIMESTAMP`,
+      [userId, isoItemId, notifyMode, enabledVal]
+    );
+  } else {
+    await pool.query(
+      `INSERT INTO subscriptions (user_id, iso_item_id, notify_mode, enabled)
+       VALUES (?, ?, ?, ?)
+       ON CONFLICT(user_id, iso_item_id) DO UPDATE SET
+         notify_mode = excluded.notify_mode,
+         enabled = excluded.enabled,
+         updated_at = CURRENT_TIMESTAMP`,
+      [userId, isoItemId, notifyMode, enabledVal]
+    );
+  }
 
   return getOne(
     'SELECT * FROM subscriptions WHERE user_id = ? AND iso_item_id = ?',
@@ -3891,13 +3905,14 @@ async function getReleaseRowsByIds(ids) {
 }
 
 async function getReleasesDetectedSince(hours) {
+  const since = sqlDetectedSince('r.detected_at', hours, dbDriver);
   const [rows] = await pool.query(
     `SELECT r.*, i.name AS iso_name, i.distribution, i.architecture, i.edition
      FROM iso_releases r
      JOIN iso_items i ON i.id = r.iso_item_id
-     WHERE r.detected_at >= DATE_SUB(NOW(), INTERVAL ? HOUR)
+     WHERE ${since.clause}
      ORDER BY r.detected_at DESC`,
-    [hours]
+    since.params
   );
 
   return rows;
