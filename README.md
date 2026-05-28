@@ -4,6 +4,12 @@
 
 Surveillance automatique de releases ISO (miroirs HTTP/FTP) : détection, API REST, notifications (e-mail, Discord, Teams, Slack, webhooks) et stockage local optionnel.
 
+## Aperçu
+
+| Interface publique | Console d’administration |
+|:---:|:---:|
+| ![Interface publique](docs/screenshots/public-home.webp) | ![Console admin](docs/screenshots/admin-dashboard.webp) |
+
 | | |
 |---|---|
 | **Version** | 0.2.0 |
@@ -14,6 +20,7 @@ Surveillance automatique de releases ISO (miroirs HTTP/FTP) : détection, API RE
 
 ## Sommaire
 
+- [Aperçu](#aperçu)
 - [À quoi ça sert ?](#à-quoi-ça-sert-)
 - [Prérequis](#prérequis)
 - [Génération de `INTRANET_SHARED_TOKEN`](#génération-de-intranet_shared_token)
@@ -32,6 +39,7 @@ Surveillance automatique de releases ISO (miroirs HTTP/FTP) : détection, API RE
 - [Structure du dépôt](#structure-du-dépôt)
 - [Dépannage](#dépannage)
 - [Documentation](#documentation)
+- [Captures d’écran](#captures-décran)
 - [Crédits](#crédits)
 - [Licence](#licence)
 
@@ -342,7 +350,8 @@ iso-watcher/
 ├── public/admin/          # Console d'administration (/admin)
 ├── docs/
 │   ├── API.md             # Référence API
-│   └── api.html           # Page /docs
+│   ├── api.html           # Page /docs
+│   └── screenshots/       # Captures WebP pour les README
 ├── scripts/
 │   ├── install.sh         # Installation Debian/Ubuntu + systemd
 │   └── docker-update.sh   # pull + up -d (image registry)
@@ -379,6 +388,12 @@ iso-watcher/
 | [.env.example](.env.example) | Toutes les variables d’environnement |
 
 Intégration **PHP** ou autre client HTTP : possible via l’API ; le service Node.js reste **autonome** (aucun PHP requis).
+
+## Captures d’écran
+
+| Discord | Rapport admin (e-mail) | Nouvelle ISO (e-mail) |
+|:---:|:---:|:---:|
+| ![Notification Discord](docs/screenshots/notifications-discord.webp) | ![Rapport admin par e-mail](docs/screenshots/notifications-mail-admin-report.webp) | ![Alerte nouvelle ISO par e-mail](docs/screenshots/notifications-mail-new-iso.webp) |
 
 ## Crédits
 

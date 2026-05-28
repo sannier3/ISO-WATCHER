@@ -4,6 +4,12 @@
 
 Automatic monitoring of ISO releases (HTTP/FTP mirrors): detection, REST API, notifications (email, Discord, Teams, Slack, webhooks), and optional local storage.
 
+## Overview
+
+| Public UI | Admin console |
+|:---:|:---:|
+| ![Public UI](docs/screenshots/public-home.webp) | ![Admin dashboard](docs/screenshots/admin-dashboard.webp) |
+
 | | |
 |---|---|
 | **Version** | 0.2.0 |
@@ -14,6 +20,7 @@ Automatic monitoring of ISO releases (HTTP/FTP mirrors): detection, REST API, no
 
 ## Table of contents
 
+- [Overview](#overview)
 - [What is it for?](#what-is-it-for)
 - [Prerequisites](#prerequisites)
 - [Generating `INTRANET_SHARED_TOKEN`](#generating-intranet_shared_token)
@@ -32,6 +39,7 @@ Automatic monitoring of ISO releases (HTTP/FTP mirrors): detection, REST API, no
 - [Repository structure](#repository-structure)
 - [Troubleshooting](#troubleshooting)
 - [Documentation](#documentation)
+- [Screenshots](#screenshots)
 - [Credits](#credits)
 - [License](#license)
 
@@ -344,7 +352,8 @@ iso-watcher/
 ├── docs/
 │   ├── API.md             # API reference (French)
 │   ├── API.en.md          # API reference (English)
-│   └── api.html           # /docs page
+│   ├── api.html           # /docs page
+│   └── screenshots/       # WebP screenshots for README files
 ├── scripts/
 │   ├── install.sh         # Debian/Ubuntu + systemd
 │   └── docker-update.sh   # pull + up -d
@@ -383,6 +392,12 @@ iso-watcher/
 | [.env.example](.env.example) | All environment variables |
 
 **PHP** or other HTTP clients: integrate via the API; the Node.js service is **standalone** (no PHP required).
+
+## Screenshots
+
+| Discord | Admin report (email) | New ISO (email) |
+|:---:|:---:|:---:|
+| ![Discord notification](docs/screenshots/notifications-discord.webp) | ![Admin report email](docs/screenshots/notifications-mail-admin-report.webp) | ![New ISO email alert](docs/screenshots/notifications-mail-new-iso.webp) |
 
 ## Credits
 
