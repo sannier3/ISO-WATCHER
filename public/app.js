@@ -662,10 +662,10 @@ async function init() {
 
   try {
     state.config = await fetchPublic('/public/ui-config');
-    if (state.config.default_language && global.IW_I18N?.setServerDefaultLocale) {
-      global.IW_I18N.setServerDefaultLocale(state.config.default_language);
-      document.documentElement.lang = global.IW_I18N.getLocale();
-      global.IW_I18N.applyDom();
+    if (state.config.default_language && window.IW_I18N?.setServerDefaultLocale) {
+      window.IW_I18N.setServerDefaultLocale(state.config.default_language);
+      document.documentElement.lang = window.IW_I18N.getLocale();
+      window.IW_I18N.applyDom();
     }
   } catch (e) {
     toast(`Config : ${e.message}`, 'error');

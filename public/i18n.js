@@ -1,7 +1,7 @@
 /**
  * ISO Watcher - UI i18n (fr / en)
  */
-(function (global) {
+(function (root) {
   const STORAGE_KEY = 'iw_locale';
   const DEFAULT_LOCALE = 'fr';
   let serverDefaultLocale = null;
@@ -779,7 +779,7 @@
       return serverDefaultLocale;
     }
 
-    const nav = String(global.navigator?.language || '').toLowerCase();
+    const nav = String(root.navigator?.language || '').toLowerCase();
     return nav.startsWith('en') ? 'en' : DEFAULT_LOCALE;
   }
 
@@ -792,7 +792,7 @@
     }
     document.documentElement.lang = locale;
     applyDom();
-    global.dispatchEvent(new CustomEvent('iw-locale-change', { detail: { locale } }));
+    root.dispatchEvent(new CustomEvent('iw-locale-change', { detail: { locale } }));
   }
 
   function interpolate(template, vars) {
@@ -855,7 +855,7 @@
     scope.querySelectorAll('[data-iw-lang-mount]').forEach((el) => mountLangSwitcher(el));
   }
 
-  global.IW_I18N = {
+  root.IW_I18N = {
     getLocale,
     setLocale,
     setServerDefaultLocale,
@@ -872,4 +872,4 @@
   } else {
     initUi();
   }
-})(window);
+})(typeof globalThis !== 'undefined' ? globalThis : window);

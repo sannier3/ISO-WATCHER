@@ -3228,8 +3228,12 @@ async function createNotificationEventAndDeliveries(releaseId) {
 
   if (!release) return;
 
-  const title = `Nouvelle ISO détectée : ${release.iso_name}`;
-  const message = `${release.iso_name} ${release.version || ''} est disponible : ${release.url}`.trim();
+  const title = t(serverLocale, 'notify.event.new_title', { name: release.iso_name || release.filename });
+  const message = t(serverLocale, 'notify.event.new_message', {
+    name: release.iso_name || release.filename,
+    version: release.version || '',
+    url: release.url || ''
+  }).replace(/\s+/g, ' ').trim();
 
   const [eventResult] = await pool.query(
     `INSERT INTO notification_events (iso_release_id, event_type, title, message) VALUES (?, 'new_release', ?, ?)`,

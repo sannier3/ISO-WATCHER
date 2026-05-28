@@ -372,10 +372,10 @@ async function initAuth() {
   const cfg = await apiPublic('GET', '/admin/ui-config');
   state.uiConfig = cfg;
 
-  if (cfg.default_language && global.IW_I18N?.setServerDefaultLocale) {
-    global.IW_I18N.setServerDefaultLocale(cfg.default_language);
-    document.documentElement.lang = global.IW_I18N.getLocale();
-    global.IW_I18N.applyDom();
+  if (cfg.default_language && window.IW_I18N?.setServerDefaultLocale) {
+    window.IW_I18N.setServerDefaultLocale(cfg.default_language);
+    document.documentElement.lang = window.IW_I18N.getLocale();
+    window.IW_I18N.applyDom();
   }
 
   if (!cfg.admin_ui_enabled) {
@@ -1650,7 +1650,7 @@ function bindEvents() {
 }
 
 async function refreshAdminStaticUi() {
-  IW_I18N?.applyDom();
+  window.IW_I18N?.applyDom?.();
   const tab = state.activeTab;
   const titles = tabTitles();
   if (titles[tab]) {
