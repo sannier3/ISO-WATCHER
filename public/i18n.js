@@ -4,6 +4,7 @@
 (function (global) {
   const STORAGE_KEY = 'iw_locale';
   const DEFAULT_LOCALE = 'fr';
+  let serverDefaultLocale = null;
 
   const strings = {
     fr: {
@@ -760,12 +761,22 @@
     }
   };
 
+  function setServerDefaultLocale(locale) {
+    if (locale === 'fr' || locale === 'en') {
+      serverDefaultLocale = locale;
+    }
+  }
+
   function getLocale() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved === 'fr' || saved === 'en') return saved;
     } catch {
       /* ignore */
+    }
+
+    if (serverDefaultLocale === 'fr' || serverDefaultLocale === 'en') {
+      return serverDefaultLocale;
     }
 
     const nav = String(global.navigator?.language || '').toLowerCase();
@@ -844,7 +855,16 @@
     scope.querySelectorAll('[data-iw-lang-mount]').forEach((el) => mountLangSwitcher(el));
   }
 
-  global.IW_I18N = { getLocale, setLocale, t, applyDom, mountLangSwitcher, initUi, strings };
+  global.IW_I18N = {
+    getLocale,
+    setLocale,
+    setServerDefaultLocale,
+    t,
+    applyDom,
+    mountLangSwitcher,
+    initUi,
+    strings
+  };
   document.documentElement.lang = getLocale();
 
   if (document.readyState === 'loading') {

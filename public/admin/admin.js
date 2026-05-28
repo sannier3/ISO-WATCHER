@@ -372,6 +372,12 @@ async function initAuth() {
   const cfg = await apiPublic('GET', '/admin/ui-config');
   state.uiConfig = cfg;
 
+  if (cfg.default_language && global.IW_I18N?.setServerDefaultLocale) {
+    global.IW_I18N.setServerDefaultLocale(cfg.default_language);
+    document.documentElement.lang = global.IW_I18N.getLocale();
+    global.IW_I18N.applyDom();
+  }
+
   if (!cfg.admin_ui_enabled) {
     $('#login-hint').textContent = t('admin.ui_disabled');
     showLoginScreen();

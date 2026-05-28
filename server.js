@@ -34,8 +34,12 @@ import {
   validateDestinationPayload,
   maskDestinationTarget,
   buildReleasePlainText,
-  buildReleaseNotificationTitle
+  buildReleaseNotificationTitle,
+  escapeHtml as notifyEscapeHtml,
+  formatFileSize as notifyFormatFileSize,
+  truncate as notifyTruncate
 } from './lib/notify-channels.js';
+import { parseLocale, t, localeBcp47 } from './lib/locale.js';
 
 /** Sous-dossiers à explorer quand discovery_regex est vide (exclut . et ..). */
 const DEFAULT_DISCOVERY_REGEX = '^[^./][^/]+/$';
@@ -48,6 +52,7 @@ const SCAN_LOG_LEVEL_RANK = { debug: 10, info: 20, warn: 30, error: 40 };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const config = loadConfig();
+const serverLocale = parseLocale(config.defaultLanguage, 'fr');
 
 let releaseLinkCheckRunning = false;
 
@@ -424,6 +429,7 @@ function registerRoutes() {
   app.get('/api/v1/public/ui-config', async () => ({
     version: APP_VERSION,
     db_driver: dbDriver,
+    default_language: serverLocale,
     public_actions_enabled: config.publicUi.allowActions,
     public_actions_auto_auth: config.publicUi.actionsAutoAuth,
     admin_ui_enabled: config.adminUi.enabled,
@@ -466,6 +472,7 @@ function registerRoutes() {
   app.get('/api/v1/admin/ui-config', async () => ({
     version: APP_VERSION,
     db_driver: dbDriver,
+    default_language: serverLocale,
     admin_ui_enabled: config.adminUi.enabled,
     auth_required: config.adminUi.authRequired,
     storage_enabled: config.storage.enabled,
@@ -1617,7 +1624,7 @@ function registerRoutes() {
     const releaseIds = Array.isArray(request.body?.release_ids) ? request.body.release_ids : [];
     const releases = releaseIds.length ? await getReleaseRowsByIds(releaseIds) : buildFakeReleaseRows([], null);
 
-    return buildPreview(request.body?.destination_type || 'email', releases);
+    return buildPreview(request.body?.destination_type || 'email', releases, { locale: serverLocale });
   });
 }
 
@@ -3474,55 +3481,59 @@ async function finalizeDeliveries(deliveryIds, {
 async function sendReleasesToDestination(destination, releases, options = {}) {
   if (!releases.length) return null;
 
+  const locale = parseLocale(options.locale ?? serverLocale);
   const { notifyMode = 'immediate', isTest = false } = options;
+  const sendOpts = { notifyMode, isTest, locale };
 
   if (destination.destination_type === 'email') {
-    return sendEmailDestination(destination, releases, { notifyMode, isTest });
+    return sendEmailDestination(destination, releases, sendOpts);
   }
 
   if (destination.destination_type === 'discord_webhook') {
-    return sendDiscordDestination(destination, releases, { notifyMode, isTest });
+    return sendDiscordDestination(destination, releases, sendOpts);
   }
 
   if (destination.destination_type === 'teams_webhook') {
-    return sendTeamsDestination(destination, releases, { notifyMode, isTest });
+    return sendTeamsDestination(destination, releases, sendOpts);
   }
 
   if (destination.destination_type === 'generic_webhook') {
-    return sendGenericWebhookDestination(destination, releases, { notifyMode, isTest });
+    return sendGenericWebhookDestination(destination, releases, sendOpts);
   }
 
   if (destination.destination_type === 'slack_webhook') {
-    return sendDestinationPush(destination, releases, { notifyMode, isTest });
+    return sendDestinationPush(destination, releases, sendOpts);
   }
 
   throw new Error(`Destination inconnue : ${destination.destination_type}`);
 }
 
-function buildEmailSubject(releases, { notifyMode = 'immediate', isTest = false } = {}) {
+function buildEmailSubject(releases, { notifyMode = 'immediate', isTest = false, locale = serverLocale } = {}) {
+  const lang = parseLocale(locale);
+
   if (isTest) {
-    return '[Test] ISO Watcher';
+    return t(lang, 'notify.test_email_subject');
   }
 
   if (notifyMode === 'hourly_digest') {
-    return `Résumé horaire ISO Watcher - ${releases.length} version(s)`;
+    return t(lang, 'notify.hourly.subject', { count: releases.length });
   }
 
   if (notifyMode === 'daily_digest') {
-    return `Résumé quotidien ISO Watcher - ${releases.length} version(s)`;
+    return t(lang, 'notify.daily.subject', { count: releases.length });
   }
 
   if (releases.length === 1) {
-    return `Nouvelle ISO : ${releases[0].iso_name || releases[0].filename}`;
+    return t(lang, 'notify.new_one', { name: releases[0].iso_name || releases[0].filename });
   }
 
-  return `${releases.length} nouvelles ISO détectées`;
+  return t(lang, 'notify.new_many', { count: releases.length });
 }
 
 async function sendEmailDestination(destination, releases, options = {}) {
-  const { notifyMode = 'immediate', isTest = false } = options;
-  const html = buildEmailHtml(releases, { notifyMode, isTest });
-  const subject = buildEmailSubject(releases, { notifyMode, isTest });
+  const { notifyMode = 'immediate', isTest = false, locale = serverLocale } = options;
+  const html = buildEmailHtml(releases, { notifyMode, isTest, locale });
+  const subject = buildEmailSubject(releases, { notifyMode, isTest, locale });
 
   logNotificationEvent('email_send_start', {
     destination_id: destination.id,
@@ -3573,7 +3584,10 @@ async function sendEmailDestination(destination, releases, options = {}) {
 }
 
 async function sendDiscordDestination(destination, releases, options = {}) {
-  const chunks = chunkDiscordEmbeds(releases, options);
+  const chunks = chunkDiscordEmbeds(releases, {
+    ...options,
+    locale: parseLocale(options.locale ?? serverLocale)
+  });
   let lastResponse = null;
 
   for (const chunk of chunks) {
@@ -3599,7 +3613,10 @@ function resolveTeamsOutboundPayload(connectorPayload, destinationConfig = {}) {
 }
 
 async function sendTeamsDestination(destination, releases, options = {}) {
-  const chunks = chunkTeamsCards(releases, options);
+  const chunks = chunkTeamsCards(releases, {
+    ...options,
+    locale: parseLocale(options.locale ?? serverLocale)
+  });
   const destinationConfig = parseJsonObject(destination.config);
   let lastResponse = null;
 
@@ -3630,53 +3647,56 @@ async function sendGenericWebhookDestination(destination, releases, options = {}
   );
 }
 
-function buildDigestIntro(notifyMode, releaseCount, isTest = false) {
+function buildDigestIntro(notifyMode, releaseCount, isTest = false, locale = serverLocale) {
+  const lang = parseLocale(locale);
+
   if (isTest) {
-    return '<p><strong>Message de test</strong> envoyé par ISO Watcher.</p>';
+    return t(lang, 'notify.test_intro');
   }
 
   if (notifyMode === 'hourly_digest') {
-    return `<p><strong>Résumé horaire</strong> - ${releaseCount} nouvelle(s) version(s) détectée(s) depuis la dernière heure.</p>`;
+    return t(lang, 'notify.hourly.intro', { count: releaseCount });
   }
 
   if (notifyMode === 'daily_digest') {
-    return `<p><strong>Résumé quotidien</strong> - ${releaseCount} nouvelle(s) version(s) détectée(s) depuis le dernier envoi.</p>`;
+    return t(lang, 'notify.daily.intro', { count: releaseCount });
   }
 
-  return `<p>ISO Watcher a détecté ${releaseCount} nouvelle(s) version(s).</p>`;
+  return t(lang, 'notify.detected_intro', { count: releaseCount });
 }
 
-function buildEmailHtml(releases, { notifyMode = 'immediate', isTest = false } = {}) {
-  const intro = buildDigestIntro(notifyMode, releases.length, isTest);
+function buildEmailHtml(releases, { notifyMode = 'immediate', isTest = false, locale = serverLocale } = {}) {
+  const lang = parseLocale(locale);
+  const intro = buildDigestIntro(notifyMode, releases.length, isTest, lang);
 
   const rows = releases.map((release) => `
     <tr>
-      <td>${escapeHtml(release.distribution || '')}</td>
-      <td>${escapeHtml(release.iso_name || release.filename)}</td>
-      <td>${escapeHtml(release.version || '')}</td>
-      <td>${escapeHtml(release.architecture || '')}</td>
-      <td>${escapeHtml(formatFileSize(release.file_size))}</td>
-      <td><a href="${escapeHtml(release.url)}">Télécharger</a></td>
+      <td>${notifyEscapeHtml(release.distribution || '')}</td>
+      <td>${notifyEscapeHtml(release.iso_name || release.filename)}</td>
+      <td>${notifyEscapeHtml(release.version || '')}</td>
+      <td>${notifyEscapeHtml(release.architecture || '')}</td>
+      <td>${notifyEscapeHtml(notifyFormatFileSize(release.file_size))}</td>
+      <td><a href="${notifyEscapeHtml(release.url)}">${notifyEscapeHtml(t(lang, 'notify.download'))}</a></td>
     </tr>`).join('');
 
   return `<!doctype html>
-<html lang="fr">
+<html lang="${localeBcp47(lang)}">
 <head>
   <meta charset="utf-8">
   <title>ISO Watcher</title>
 </head>
 <body style="font-family: Arial, sans-serif; color: #111827;">
-  <h2>${isTest ? 'Test ISO Watcher' : 'Nouvelles ISO détectées'}</h2>
+  <h2>${notifyEscapeHtml(isTest ? t(lang, 'notify.test_email_heading') : t(lang, 'notify.new_email_title'))}</h2>
   ${intro}
   <table border="1" cellspacing="0" cellpadding="8" style="border-collapse: collapse; width: 100%;">
     <thead>
       <tr>
-        <th align="left">Distribution</th>
-        <th align="left">Nom</th>
-        <th align="left">Version</th>
-        <th align="left">Architecture</th>
-        <th align="left">Taille</th>
-        <th align="left">Lien</th>
+        <th align="left">${notifyEscapeHtml(t(lang, 'notify.col.distribution'))}</th>
+        <th align="left">${notifyEscapeHtml(t(lang, 'notify.col.name'))}</th>
+        <th align="left">${notifyEscapeHtml(t(lang, 'notify.col.version'))}</th>
+        <th align="left">${notifyEscapeHtml(t(lang, 'notify.col.architecture'))}</th>
+        <th align="left">${notifyEscapeHtml(t(lang, 'notify.col.size'))}</th>
+        <th align="left">${notifyEscapeHtml(t(lang, 'notify.col.link'))}</th>
       </tr>
     </thead>
     <tbody>${rows}</tbody>
@@ -3685,55 +3705,43 @@ function buildEmailHtml(releases, { notifyMode = 'immediate', isTest = false } =
 </html>`;
 }
 
-function formatFileSize(bytes) {
-  const value = Number(bytes);
-
-  if (!Number.isFinite(value) || value < 1) {
-    return '-';
-  }
-
-  const units = ['o', 'Ko', 'Mo', 'Go', 'To'];
-  let size = value;
-  let unit = 0;
-
-  while (size >= 1024 && unit < units.length - 1) {
-    size /= 1024;
-    unit += 1;
-  }
-
-  return `${size >= 10 || unit === 0 ? Math.round(size) : size.toFixed(1)} ${units[unit]}`;
-}
-
-function chunkDiscordEmbeds(releases, { notifyMode = 'immediate', isTest = false } = {}) {
+function chunkDiscordEmbeds(releases, { notifyMode = 'immediate', isTest = false, locale = serverLocale } = {}) {
+  const lang = parseLocale(locale);
+  const unspecified = t(lang, 'notify.discord.arch_unknown');
   const digestFooter = isTest
-    ? 'Test ISO Watcher'
+    ? t(lang, 'notify.test.title')
     : notifyMode === 'hourly_digest'
-      ? 'Résumé horaire ISO Watcher'
+      ? t(lang, 'notify.hourly.footer')
       : notifyMode === 'daily_digest'
-        ? 'Résumé quotidien ISO Watcher'
+        ? t(lang, 'notify.daily.footer')
         : null;
 
   const embeds = releases.map((release) => {
-    const description = `${release.version ? `Version : ${release.version}\n` : ''}Architecture : ${release.architecture || 'non précisée'}\nTaille : ${formatFileSize(release.file_size)}\nFichier : ${release.filename}`;
+    const description = [
+      release.version ? t(lang, 'notify.discord.version', { version: release.version }) : '',
+      t(lang, 'notify.discord.arch', { arch: release.architecture || unspecified }),
+      t(lang, 'notify.discord.size', { size: notifyFormatFileSize(release.file_size) }),
+      t(lang, 'notify.discord.file', { file: release.filename })
+    ].filter(Boolean).join('\n');
 
     return {
-      title: truncate(`Nouvelle ISO : ${release.iso_name || release.filename}`, 256),
+      title: notifyTruncate(t(lang, 'notify.discord.new_iso', { name: release.iso_name || release.filename }), 256),
       url: release.url,
-      description: truncate(description, 4096),
+      description: notifyTruncate(description, 4096),
       fields: [
         {
-          name: 'Distribution',
-          value: truncate(release.distribution || 'non précisée', 1024),
+          name: t(lang, 'notify.col.distribution'),
+          value: notifyTruncate(release.distribution || unspecified, 1024),
           inline: true
         },
         {
-          name: 'Architecture',
-          value: truncate(release.architecture || 'non précisée', 1024),
+          name: t(lang, 'notify.col.architecture'),
+          value: notifyTruncate(release.architecture || unspecified, 1024),
           inline: true
         },
         {
-          name: 'Version',
-          value: truncate(release.version || 'non précisée', 1024),
+          name: t(lang, 'notify.col.version'),
+          value: notifyTruncate(release.version || unspecified, 1024),
           inline: true
         }
       ],
@@ -3767,14 +3775,15 @@ function chunkDiscordEmbeds(releases, { notifyMode = 'immediate', isTest = false
   return chunks;
 }
 
-function chunkTeamsCards(releases, { notifyMode = 'immediate', isTest = false } = {}) {
+function chunkTeamsCards(releases, { notifyMode = 'immediate', isTest = false, locale = serverLocale } = {}) {
+  const lang = parseLocale(locale);
   const cards = [];
   let currentFacts = [];
 
   for (const release of releases) {
     const fact = {
       title: `${release.iso_name || release.filename}`,
-      value: `${release.version || 'version inconnue'} | ${release.architecture || 'architecture inconnue'} | ${release.url}`
+      value: `${release.version || t(lang, 'notify.teams.unknown_version')} | ${release.architecture || t(lang, 'notify.teams.unknown_arch')} | ${release.url}`
     };
 
     const nextFacts = [...currentFacts, fact];
@@ -3784,7 +3793,7 @@ function chunkTeamsCards(releases, { notifyMode = 'immediate', isTest = false } 
       Buffer.byteLength(JSON.stringify(candidate), 'utf8') > config.limits.teamsMaxPayloadBytes &&
       currentFacts.length
     ) {
-      cards.push(buildTeamsPayload(currentFacts));
+      cards.push(buildTeamsPayload(currentFacts, { notifyMode, isTest, locale: lang }));
       currentFacts = [fact];
     } else {
       currentFacts = nextFacts;
@@ -3792,21 +3801,22 @@ function chunkTeamsCards(releases, { notifyMode = 'immediate', isTest = false } 
   }
 
   if (currentFacts.length) {
-    cards.push(buildTeamsPayload(currentFacts, { notifyMode, isTest }));
+    cards.push(buildTeamsPayload(currentFacts, { notifyMode, isTest, locale: lang }));
   }
 
   return cards;
 }
 
-function buildTeamsPayload(facts, { notifyMode = 'immediate', isTest = false } = {}) {
-  let title = 'Nouvelles ISO détectées';
+function buildTeamsPayload(facts, { notifyMode = 'immediate', isTest = false, locale = serverLocale } = {}) {
+  const lang = parseLocale(locale);
+  let title = t(lang, 'notify.new_email_title');
 
   if (isTest) {
-    title = 'Test ISO Watcher';
+    title = t(lang, 'notify.test.title');
   } else if (notifyMode === 'hourly_digest') {
-    title = 'Résumé horaire ISO Watcher';
+    title = t(lang, 'notify.hourly.footer');
   } else if (notifyMode === 'daily_digest') {
-    title = 'Résumé quotidien ISO Watcher';
+    title = t(lang, 'notify.daily.footer');
   }
 
   return {
@@ -3837,33 +3847,35 @@ function buildTeamsPayload(facts, { notifyMode = 'immediate', isTest = false } =
   };
 }
 
-function buildPreview(destinationType, releases) {
+function buildPreview(destinationType, releases, { locale = serverLocale } = {}) {
+  const lang = parseLocale(locale);
+
   if (destinationType === 'email') {
     return {
       type: 'email',
-      html: buildEmailHtml(releases)
+      html: buildEmailHtml(releases, { locale: lang })
     };
   }
 
   if (destinationType === 'discord_webhook') {
     return {
       type: 'discord_webhook',
-      payloads: chunkDiscordEmbeds(releases).map((embeds) => ({ embeds }))
+      payloads: chunkDiscordEmbeds(releases, { locale: lang }).map((embeds) => ({ embeds }))
     };
   }
 
   if (destinationType === 'teams_webhook') {
     return {
       type: 'teams_webhook',
-      payloads: chunkTeamsCards(releases)
+      payloads: chunkTeamsCards(releases, { locale: lang })
     };
   }
 
   if (destinationType === 'slack_webhook') {
     return {
       type: destinationType,
-      title: buildReleaseNotificationTitle(releases),
-      text: buildReleasePlainText(releases)
+      title: buildReleaseNotificationTitle(releases, { locale: lang }),
+      text: buildReleasePlainText(releases, { locale: lang })
     };
   }
 
